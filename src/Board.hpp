@@ -84,6 +84,7 @@ public:
     } pair;
 
     std::vector<pair> GetLegalMove(Board::pair pos);
+    void multidirection(std::vector<Board::pair> &l_pos, std::vector<Board::pair> &directions, Board::pair pos, bool pcolor);
     void SelectPiece(Vector2 pos);
     void MovePiece(Vector2 pos);
 

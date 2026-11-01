@@ -1,6 +1,7 @@
 #include "Board.hpp"
 #include <iostream>
 #include <cstdint>
+#include <array>
 
 using namespace std;
 
@@ -44,17 +45,14 @@ void Board::Draw()
         }
     }
 
-
     //     // white piece eated BY black
-    // std::vector<Piece> eated_white;                            
+    // std::vector<Piece> eated_white;
     // // black piece eated BY white
-    // std::vector<Piece> eated_black;                            
-
+    // std::vector<Piece> eated_black;
 
     // draw bottom left piece eated by white
 
     // draw top right pieace eated by black
-
 
     // by number or by order with little pieces
 
@@ -74,7 +72,7 @@ std::vector<Board::pair> Board::GetLegalMove(Board::pair pos)
     uint8_t pvalue = board[pos.x + pos.y * chess_size];
 
     Board::Piece p = static_cast<Piece>(pvalue & 0b01111111);
-    bool color = (pvalue & 0b10000000) != 0;
+    bool pcolor = (pvalue & 0b10000000) != 0;
 
     // printf("%d\n", pvalue);
     // cout << "piece: " << (pvalue & 0b01111111) << " color: " << (color ? "white" : "black") << endl;
@@ -82,26 +80,26 @@ std::vector<Board::pair> Board::GetLegalMove(Board::pair pos)
     switch (p)
     {
     case Board::Piece::Pawn:
-        if (color)
+        if (pcolor)
         {
             if (board[pos.x + (pos.y - 1) * chess_size] == 0)
             {
                 if (pos.y == chess_size - 2)
-                {
-                    l_pos.push_back(Board::pair{pos.x, pos.y - 2});
-                }
+                    if (board[pos.x + (pos.y - 2) * chess_size] == 0)
+                        l_pos.push_back(Board::pair{pos.x, pos.y - 2});
+
                 l_pos.push_back(Board::pair{pos.x, pos.y - 1});
             }
             if (pos.x > 0)
             {
                 uint8_t value = board[pos.x - 1 + (pos.y - 1) * chess_size];
-                if (value != 0 && (!((value & 0b10000000) != 0) && color))
+                if (value != 0 && (!((value & 0b10000000) != 0) && pcolor))
                     l_pos.push_back(Board::pair{pos.x - 1, pos.y - 1});
             }
             if (pos.x < chess_size - 1)
             {
                 uint8_t value = board[pos.x + 1 + (pos.y - 1) * chess_size];
-                if (value != 0 && (!((value & 0b10000000) != 0) && color))
+                if (value != 0 && (!((value & 0b10000000) != 0) && pcolor))
                     l_pos.push_back(Board::pair{pos.x + 1, pos.y - 1});
             }
         }
@@ -110,28 +108,136 @@ std::vector<Board::pair> Board::GetLegalMove(Board::pair pos)
             if (board[pos.x + (pos.y + 1) * chess_size] == 0)
             {
                 if (pos.y == 1)
-                {
-                    l_pos.push_back(Board::pair{pos.x, pos.y + 2});
-                }
+                    if (board[pos.x + (pos.y + 2) * chess_size] == 0)
+                        l_pos.push_back(Board::pair{pos.x, pos.y + 2});
+
                 l_pos.push_back(Board::pair{pos.x, pos.y + 1});
             }
             if (pos.x > 0)
             {
                 uint8_t value = board[pos.x - 1 + (pos.y + 1) * chess_size];
-                if (value != 0 && (((value & 0b10000000) != 0) && !color))
+                if (value != 0 && (((value & 0b10000000) != 0) && !pcolor))
                     l_pos.push_back(Board::pair{pos.x - 1, pos.y + 1});
             }
             if (pos.x < chess_size - 1)
             {
                 uint8_t value = board[pos.x + 1 + (pos.y + 1) * chess_size];
-                if (value != 0 && (((value & 0b10000000) != 0) && !color))
+                if (value != 0 && (((value & 0b10000000) != 0) && !pcolor))
                     l_pos.push_back(Board::pair{pos.x + 1, pos.y + 1});
             }
         }
         break;
+
+    case Board::Piece::Bishop:
+    {
+        vector<Board::pair> bdirections = {
+            {1, 1},
+            {1, -1},
+            {-1, 1},
+            {-1, -1}};
+
+        multidirection(l_pos, bdirections, pos, pcolor);
+
+        break;
     }
 
-    return l_pos;
+    case Board::Piece::Rook:
+    {
+        vector<Board::pair> rdirections = {
+            {1, 0},
+            {-1, 0},
+            {0, 1},
+            {0, -1}};
+
+        multidirection(l_pos, rdirections, pos, pcolor);
+
+        break;
+    }
+
+    case Board::Piece::Queen:
+    {
+        vector<Board::pair> qdirections = {
+            {1, 1},
+            {1, -1},
+            {-1, 1},
+            {-1, -1},
+            {1, 0},
+            {-1, 0},
+            {0, 1},
+            {0, -1}};
+
+        multidirection(l_pos, qdirections, pos, pcolor);
+
+        break;
+    }
+
+    case Board::Piece::Knight:
+    {
+        vector<pair> poss = {
+            {-1, 2},
+            {1, 2},
+            {-1, -2},
+            {1, -2},
+            {-2, 1},
+            {-2, -1},
+            {2, -1},
+            {2, 1},
+        };
+        for (auto current : poss)
+        {
+            current.x += pos.x;
+            current.y += pos.y;
+            if (!(current.x >= 0 && current.x < chess_size && current.y >= 0 && current.y < chess_size))
+                continue;
+            uint8_t value = board[current.x + current.y * chess_size];
+            if (value != 0)
+            {
+                if (((value & 0b10000000) != 0) ^ pcolor)
+                {
+                    l_pos.push_back(current);
+                }
+            }
+            else
+                l_pos.push_back(current);
+        }
+        break;
+    }
+    case Board::Piece::King:
+    {
+        // 8 case arround the king, remove case if check on theses
+        break;
+    }
+    }// faire une fonction qui dit si la case est attacker par une piece, pour gerer les deplacement du roi
+
+    return l_pos; // return specific value for check the king, if moving bishop do check return a thing like {-12, -12}
+}
+
+void Board::multidirection(std::vector<Board::pair> &l_pos, std::vector<Board::pair> &directions, Board::pair pos, bool pcolor)
+{
+    for (const auto dir : directions)
+    {
+        Board::pair current = pos;
+
+        current.x += dir.x;
+        current.y += dir.y;
+        while (current.x < chess_size && current.y < chess_size && current.x >= 0 && current.y >= 0)
+        {
+            uint8_t value = board[current.x + current.y * chess_size];
+            if (value != 0)
+            {
+                bool color = (value & 0b10000000) != 0;
+                if (pcolor ^ color)
+                {
+                    l_pos.push_back(current);
+                }
+                break;
+            }
+            l_pos.push_back(current);
+
+            current.x += dir.x;
+            current.y += dir.y;
+        }
+    }
 }
 
 void Board::SelectPiece(Vector2 pos)
@@ -180,12 +286,16 @@ void Board::MovePiece(Vector2 pos)
 
 void Board::Eat(pair pos)
 {
-    uint8_t value = board[pos.x+pos.y*chess_size];
-    if(value == 0) return;
-    Piece p = static_cast<Piece>(value&0b01111111);
-    if((value & 0b10000000) != 0) {
+    uint8_t value = board[pos.x + pos.y * chess_size];
+    if (value == 0)
+        return;
+    Piece p = static_cast<Piece>(value & 0b01111111);
+    if ((value & 0b10000000) != 0)
+    {
         eated_white.push_back(p);
-    } else {
+    }
+    else
+    {
         eated_black.push_back(p);
     }
 }
