@@ -204,12 +204,76 @@ std::vector<Board::pair> Board::GetLegalMove(Board::pair pos)
     }
     case Board::Piece::King:
     {
-        // 8 case arround the king, remove case if check on theses
+        for (int y = pos.y - 1; y < pos.y + 1; y++)
+        {
+            for (int x = pos.x - 1; x < pos.x + 1; x++)
+            {
+                if (!(x >= 0 && x < chess_size && y >= 0 && y < chess_size))
+                    continue;
+                uint8_t value = board[x + y * chess_size];
+                if (value != 0)
+                    if (!(((value & 0b10000000) != 0) ^ pcolor))
+                        if (!IsAttackBy(pair{x, y}, !pcolor))
+                            l_pos.push_back(pair{x, y});
+            }
+        }
         break;
     }
-    }// faire une fonction qui dit si la case est attacker par une piece, pour gerer les deplacement du roi
+    }
 
     return l_pos; // return specific value for check the king, if moving bishop do check return a thing like {-12, -12}
+}
+
+bool Board::IsAttackBy(pair pos, bool by)
+{
+    vector<pair> directions = {
+        {1, 1},
+        {1, -1},
+        {-1, 1},
+        {-1, -1},
+        {1, 0},
+        {-1, 0},
+        {0, 1},
+        {0, -1},
+    };
+
+    for (const auto dir : directions)
+    {
+        Board::pair current = pos;
+
+        current.x += dir.x;
+        current.y += dir.y;
+        while (current.x < chess_size && current.y < chess_size && current.x >= 0 && current.y >= 0)
+        {
+            uint8_t value = board[current.x + current.y * chess_size];
+            if (value != 0)
+                return ((value & 0b10000000) != 0) ^ by;
+            current.x += dir.x;
+            current.y += dir.y;
+        }
+    }
+
+    vector<pair> poss = {
+        {-1, 2},
+        {1, 2},
+        {-1, -2},
+        {1, -2},
+        {-2, 1},
+        {-2, -1},
+        {2, -1},
+        {2, 1},
+    };
+    for (auto current : poss)
+    {
+        current.x += pos.x;
+        current.y += pos.y;
+        if (!(current.x >= 0 && current.x < chess_size && current.y >= 0 && current.y < chess_size))
+            continue;
+        uint8_t value = board[current.x + current.y * chess_size];
+        if (value != 0)
+            return (((value & 0b10000000) != 0) ^ by);
+    }
+    return false;
 }
 
 void Board::multidirection(std::vector<Board::pair> &l_pos, std::vector<Board::pair> &directions, Board::pair pos, bool pcolor)
@@ -269,19 +333,35 @@ void Board::MovePiece(Vector2 pos)
     tmp.y = pos.y / cell_size;
     selected = board[tmp.x + tmp.y * chess_size] != 0;
 
-    for (const auto pos : GetLegalMove(select_cell))
+    for (const auto _pos : GetLegalMove(select_cell))
     {
-        if (pos.x == tmp.x && pos.y == tmp.y)
+        if (_pos.x == tmp.x && _pos.y == tmp.y)
         {
             Eat(tmp);
-            board[tmp.x + tmp.y * chess_size] = board[select_cell.x + select_cell.y * chess_size];
+            uint8_t value = board[select_cell.x + select_cell.y * chess_size];
+            uint8_t toeated = board[tmp.x + tmp.y * chess_size];
+            bool color = (value & 0b10000000) != 0;
+            board[tmp.x + tmp.y * chess_size] = value;
             board[select_cell.x + select_cell.y * chess_size] = 0;
+            pair kp = getKingPos(color);
+            if (IsAttackBy(kp, !color))
+                UndoMovePiece(Vector2{(float)tmp.x, (float)tmp.y}, toeated);
             selected = false;
+            pair ekp = getKingPos(!color);
+            white_check = IsAttackBy(ekp, color);
+            break;
         }
     }
 
     select_cell.x = tmp.x;
     select_cell.y = tmp.y;
+}
+
+void Board::UndoMovePiece(Vector2 pos, uint8_t undoeat)
+{
+
+//    board[tmp.x + tmp.y * chess_size] = value;
+  //  board[select_cell.x + select_cell.y * chess_size] = 0;
 }
 
 void Board::Eat(pair pos)
@@ -297,5 +377,18 @@ void Board::Eat(pair pos)
     else
     {
         eated_black.push_back(p);
+    }
+}
+
+Board::pair Board::getKingPos(bool color)
+{
+    for (int y = 0; y < chess_size; y++)
+    {
+        for (int x = 0; x < chess_size; x++)
+        {
+            uint8_t v = board[x + y * chess_size];
+            if (v != 0 && Piece::King == static_cast<Piece>(v & 0b01111111) && !(((v & 0b10000000) != 0) ^ color))
+                return pair{x, y};
+        }
     }
 }

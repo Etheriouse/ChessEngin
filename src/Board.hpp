@@ -84,11 +84,14 @@ public:
     } pair;
 
     std::vector<pair> GetLegalMove(Board::pair pos);
+    bool IsAttackBy(pair pos, bool by);
     void multidirection(std::vector<Board::pair> &l_pos, std::vector<Board::pair> &directions, Board::pair pos, bool pcolor);
     void SelectPiece(Vector2 pos);
     void MovePiece(Vector2 pos);
+    void UndoMovePiece(Vector2 pos, uint8_t undoeat);
+    pair getKingPos(bool color);
 
-    bool selected = false;
+    bool selected = false, white_check = false, black_check = false, self_check = false;
 
 private:
     int width = 1920, height = 1080, chess_size = 8, sprite_size = 32, cell_size, start_x_draw;
