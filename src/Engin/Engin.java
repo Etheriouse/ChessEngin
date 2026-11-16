@@ -17,21 +17,35 @@ public class Engin {
     }
 
     public void run() {
-        this.board = Board.empty(false);
-        Pos wking = new Pos("a3");
-        Pos wbishop = new Pos("b4");
-        Pos wrook = new Pos("c5");
-        Pos bBishop = new Pos("d6");
-        board.placePiece(wking, Piece.wKing);
-        board.placePiece(wbishop, Piece.wBishop);
-        board.placePiece(wrook, Piece.wRook);
-        board.placePiece(bBishop, Piece.bBishop);
-        board.updateControle();
+        this.board = Board.classic(false);
         System.out.println(board);
         // System.out.println("king move: " + Arrays.toString(board.getMove(wking).toArray()));
-        System.out.println("rook move: " + Arrays.toString(board.getMove(wrook).toArray()));
         
-        // board.move(setupRookWhite, new Pos("h3"));
+        board.move(new Pos("e2"), new Pos("e4"));
+        System.out.println(board);
+        board.move(new Pos("f1"), new Pos("b5"));
+        board.move(new Pos("e1"), new Pos("e3"));
+        board.move(new Pos("e3"), new Pos("d3"));
+        board.move(new Pos("d3"), new Pos("d7"));
+        board.move(new Pos("g1"), new Pos("h3"));
+        board.move(new Pos("b1"), new Pos("a3"));
+        board.move(new Pos("d2"), new Pos("d4"));
+        board.move(new Pos("c1"), new Pos("h6"));
+        board.move(new Pos("d1"), new Pos("d3"));
+        System.out.println(board);
+        System.out.println("white king move: " + Arrays.toString(board.getMove(new Pos("d8")).toArray()));
+        System.out.println("white bishop move: " + Arrays.toString(board.getMove(new Pos("c8")).toArray()));
+        System.out.println("white king check ? " + board.kingIsInCheck(true));
+
+        // board.move(new Pos("c8"), new Pos("d7"));
+        // System.out.println(board.controlByBlack.containsKey(new Pos("d8")));
+        System.out.println(board);
+//        board.updateControle();
+        System.out.println("white king check ? " + board.kingIsInCheck(true));
+        System.out.println("echek et mate? " + board.mate(true));
+        System.out.println(Arrays.toString(board.getMove(new Pos("e1")).toArray()));
+        board.move(new Pos("e1"), new Pos("c1"));
+        System.out.println(board);
         // System.out.println(board);
         // System.out.println(Arrays.toString(board.getMove(king).toArray()));
 

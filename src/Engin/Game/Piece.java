@@ -33,9 +33,16 @@ public enum Piece {
         Pawn
     }
 
+    public boolean isNone() {
+        return this.ordinal() == 0;
+    }
 
     public boolean sameColor(Piece p) {
         return (this.ordinal() < 7 && p.ordinal() < 7) || (this.ordinal() >= 7 && p.ordinal() >= 7) && (this.ordinal() != 0 || p.ordinal() != 0);
+    }
+
+    public boolean sameColor(boolean white) {
+        return !(this.ordinal() < 7 ^ white) && this.ordinal() != 0;
     }
 
     public boolean isType(Type t) {

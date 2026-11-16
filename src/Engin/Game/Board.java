@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 import Engin.Engin;
 
@@ -17,8 +18,8 @@ public class Board {
     public Map<Pos, Integer> controlByWhite, controlByBlack;
     public Set<Piece> eatedWhite, eatedBlack;
     public boolean youPlayWhite;
-    public boolean wleftRookMoved, wrightRookMoved, wKingMoved; 
-    public boolean bleftRookMoved, brightRookMoved, bKingMoved; 
+    public boolean wleftRookMoved, wrightRookMoved, wKingMoved;
+    public boolean bleftRookMoved, brightRookMoved, bKingMoved;
     public Pos wking = new Pos(-1, -1), bking = new Pos(-1, -1);
 
     public static Board empty(boolean play) {
@@ -75,12 +76,12 @@ public class Board {
                 cells[Engin.height - 1][(int) ((Engin.width / 2) * 0.5)] = Piece.wBishop;
                 cells[Engin.height - 1][Engin.width - 1 - (int) ((Engin.width / 2) * 0.5)] = Piece.wBishop;
 
-                cells[0][(Engin.height / 2) - 1] = Piece.bKing;
-                bking = new Pos((Engin.height / 2) - 1, 0);
-                cells[0][(Engin.height / 2)] = Piece.bQueen;
-                cells[Engin.height - 1][(Engin.height / 2) - 1] = Piece.wKing;
-                wking = new Pos((Engin.height / 2) - 1, Engin.height - 1);
-                cells[Engin.height - 1][(Engin.height / 2)] = Piece.wQueen;
+                cells[0][(Engin.height / 2)] = Piece.bKing;
+                bking = new Pos((Engin.height / 2), 0);
+                cells[0][(Engin.height / 2) - 1] = Piece.bQueen;
+                cells[Engin.height - 1][(Engin.height / 2)] = Piece.wKing;
+                wking = new Pos((Engin.height / 2), Engin.height - 1);
+                cells[Engin.height - 1][(Engin.height / 2) - 1] = Piece.wQueen;
             } else {
                 cells[0][0] = Piece.wRook;
                 cells[0][Engin.width - 1] = Piece.wRook;
@@ -98,12 +99,12 @@ public class Board {
                 cells[Engin.height - 1][(int) ((Engin.width / 2) * 0.5)] = Piece.bBishop;
                 cells[Engin.height - 1][Engin.width - 1 - (int) ((Engin.width / 2) * 0.5)] = Piece.bBishop;
 
-                cells[0][(Engin.height / 2) - 1] = Piece.wKing;
-                wking = new Pos((Engin.height / 2) - 1, 0);
-                cells[0][(Engin.height / 2)] = Piece.wQueen;
-                cells[Engin.height - 1][(Engin.height / 2) - 1] = Piece.bKing;
-                bking = new Pos((Engin.height / 2) - 1, Engin.height - 1);
-                cells[Engin.height - 1][(Engin.height / 2)] = Piece.bQueen;
+                cells[0][(Engin.height / 2)] = Piece.wKing;
+                wking = new Pos((Engin.height / 2), 0);
+                cells[0][(Engin.height / 2) - 1] = Piece.wQueen;
+                cells[Engin.height - 1][(Engin.height / 2)] = Piece.bKing;
+                bking = new Pos((Engin.height / 2), Engin.height - 1);
+                cells[Engin.height - 1][(Engin.height / 2) - 1] = Piece.bQueen;
 
             }
         } else {
@@ -208,27 +209,49 @@ public class Board {
             }
 
             case Piece.wKing: {
-                if(!kingIsInCheck(true)) {
-                    if(!wKingMoved) {
-                        if(wleftRookMoved) {
-                            for(int i = wking.x; i>=0; i--) {
-                                if(cells[wking.y][i] != Piece.None);
+                if (!kingIsInCheck(true)) {
+                    if (!wKingMoved) {
+                        if (!wleftRookMoved) {
+                            boolean clean = true;
+                            for (int i = wking.x; i > 0; i--) {
+                                clean &= cells[wking.y][i] == Piece.None
+                                        && !controlByBlack.containsKey(new Pos(i, wking.y));
                             }
+                            if (clean)
+                                l.add(new Pos(2, wking.y));
                         }
-                        if(wrightRookMoved) {
-
+                        if (!wrightRookMoved) {
+                            boolean clean = true;
+                            for (int i = wking.x; i < Engin.width - 2; i++) {
+                                clean &= cells[wking.y][i] == Piece.None
+                                        && !controlByBlack.containsKey(new Pos(i, wking.y));
+                            }
+                            if (clean)
+                                l.add(new Pos(Engin.width - 2, wking.y));
                         }
                     }
                 }
             }
             case Piece.bKing: {
-                if(!kingIsInCheck(false)) {
-                    if(!bKingMoved) {
-                        if(bleftRookMoved) {
-                            
+                if (!kingIsInCheck(false)) {
+                    if (!bKingMoved) {
+                        if (!bleftRookMoved) {
+                            boolean clean = true;
+                            for (int i = bking.x - 1; i > 0; i--) {
+                                clean &= cells[bking.y][i] == Piece.None
+                                        && !controlByWhite.containsKey(new Pos(i, bking.y));
+                            }
+                            if (clean)
+                                l.add(new Pos(2, bking.y));
                         }
-                        if(brightRookMoved) {
-
+                        if (!brightRookMoved) {
+                            boolean clean = true;
+                            for (int i = bking.x + 1; i < Engin.width - 2; i++) {
+                                clean &= cells[bking.y][i] == Piece.None
+                                        && !controlByWhite.containsKey(new Pos(i, bking.y));
+                            }
+                            if (clean)
+                                l.add(new Pos(Engin.width - 2, bking.y));
                         }
                     }
                 }
@@ -272,7 +295,6 @@ public class Board {
         Piece head = cells[p.y][p.x];
 
         List<Pos> toErase = new ArrayList<>();
-
         for (Pos to : l) {
             old = cells[to.y][to.x];
             cells[to.y][to.x] = head;
@@ -355,6 +377,7 @@ public class Board {
             removeControle(cells[from.y][from.x].getColor(), from);
             eat(from, to);
             addControle(cells[to.y][to.x].getColor(), to);
+
             return true;
         } else
             return false;
@@ -362,8 +385,39 @@ public class Board {
 
     private boolean eat(Pos from, Pos to) {
         Piece pfrom = cells[from.y][from.x];
+
+        if (pfrom.isType(Piece.Type.Rook)) {
+            if (pfrom.getColor()) {
+                if (from.x == 0)
+                    wleftRookMoved = true;
+                if (from.y == Engin.width)
+                    wrightRookMoved = true;
+            } else {
+                if (from.x == 0)
+                    bleftRookMoved = true;
+                if (from.y == Engin.width)
+                    brightRookMoved = true;
+            }
+        } else if (pfrom.isType(Piece.Type.King)) { // if first move go to +2 => rock
+            if (pfrom.getColor()) {
+                wKingMoved = true;
+            } else {
+                bKingMoved = true;
+            }
+            if (to.x == 2) {
+                cells[to.y][3] = cells[to.y][0];
+                cells[to.y][0] = Piece.None;
+            }
+            if (to.x == Engin.width - 2) {
+                cells[to.y][Engin.width - 3] = cells[to.y][Engin.width - 1];
+                cells[to.y][Engin.width - 1] = Piece.None;
+            }
+
+        }
+
         Piece pto = cells[to.y][to.x];
         if (pto != Piece.None) {
+            removeControle(pto.getColor(), to);
             if (pfrom.getColor())
                 eatedBlack.add(pto);
             else
@@ -401,15 +455,16 @@ public class Board {
             l.add(new Pos(pos.x, pos.y + movePawnWhite));
         } else {
             if (pos.y == Engin.height - 2)
-                l.add(new Pos(pos.x, pos.y + (2 * movePawnWhite)));
-            l.add(new Pos(pos.x, pos.y + movePawnWhite));
+                l.add(new Pos(pos.x, pos.y + (2 * -movePawnWhite)));
+            l.add(new Pos(pos.x, pos.y + -movePawnWhite));
         }
 
         if (pos.y > 0 && pos.y < Engin.height - 1) {
             Piece tmp = Piece.None;
             Pos ptm = null;
-            if (pos.x < Engin.width) {
+            if (pos.x < Engin.width - 1) {
                 ptm = new Pos(pos.x + 1, pos.y + movePawnWhite);
+                // System.out.println(ptm);
                 tmp = cells[ptm.y][ptm.x];
             }
             if (pos.x > 0) {
@@ -422,8 +477,74 @@ public class Board {
         }
     }
 
+    public boolean simulate(Pos from, Pos to, Function<Void, Boolean> doSomething) {
+
+        Pos oldKing = from;
+        Piece old = cells[to.y][to.x];
+        Piece head = cells[from.y][from.x];
+
+        boolean result;
+
+        removeControle(cells[from.y][from.x].getColor(), from);
+        // eat(from, to); equivalent de eat sans toucher au set de piece eated
+        if (!old.isNone())
+            removeControle(old.getColor(), to);
+        cells[to.y][to.x] = head;
+        cells[from.y][from.x] = Piece.None;
+        if (head.isType(Piece.Type.King)) {
+            if (head.getColor()) {
+                oldKing = wking;
+                wking = to;
+            } else {
+                oldKing = bking;
+                bking = to;
+            }
+        }
+        addControle(head.getColor(), to);
+
+        result = doSomething.apply(null);
+
+        removeControle(head.getColor(), to);
+        if (head.isType(Piece.Type.King)) {
+            if (head.getColor())
+                wking = oldKing;
+            else
+                bking = oldKing;
+        }
+        cells[to.y][to.x] = old;
+        cells[from.y][from.x] = head;
+        if (!old.isNone())
+            addControle(old.getColor(), to);
+        addControle(head.getColor(), from);
+
+        return result;
+    }
+
     // cherche si le roi de couleur color est atker
     // parcour toute les direction possible en vers lui du coup
+
+    public boolean mate(boolean kingColor) {
+        // try all move from kingcolor piece, if in all case chek, so mate
+
+        for (int i = 0; i < Engin.height; i++) {
+            for (int j = 0; j < Engin.width; j++) {
+                Piece look = cells[i][j];
+                if (!look.isNone() && look.sameColor(kingColor)) { // if look not "none"
+                    Pos from = new Pos(j, i);
+                    for (Pos to : getMove(from)) {
+                        if (!simulate(from, to, (Void) -> {
+                            return kingIsInCheck(kingColor);
+                        })) {
+                            // System.out.println("solution found: " + from + "->" + to);
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 
     private boolean isKingAttack(boolean kingColor, int dir[][], boolean rook) {
 
