@@ -92,7 +92,11 @@ impl Engin {
     }
 
     pub fn place(&mut self, p: Piece, to: &Pos) {
-        self.board[(to.i * 8 + to.j) as usize] = Some(p);
+        self.board[to.index()] = Some(p);
+    }
+
+    pub fn get(&self, from: &Pos) -> &Option<Piece> {
+        return &self.board[from.index()];
     }
 
     // get all possible move without check the king rule
