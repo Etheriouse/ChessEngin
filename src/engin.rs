@@ -22,6 +22,7 @@ pub struct Engin {
     pass: Option<Pos>,
 }
 
+// base
 impl Engin {
     pub fn empty(played: bool) -> Self {
         Self {
@@ -95,13 +96,75 @@ impl Engin {
     }
 
     // get all possible move without check the king rule
-    fn get_theoric_moves(&self, from: &Pos) -> Vec<Pos> {
+}
+
+// controle
+impl Engin {
+    pub fn update_control(&mut self) {
+        self.white.control.clear();
+        self.black.control.clear();
+
+        for i in 0..8 {
+            for j in 0..8 {
+                self.add_control(&Pos::new_c(i, j));
+            }
+        }
+    }
+
+    fn add_control(&mut self, from: &Pos) {
+        match self.board[from.index()] {
+            Some(p) => {
+                let base = self.get_theoric_moves(from, true);
+                for pos in base {
+                    if p.color {
+                        *self.white.control.entry(pos).or_insert(0) += 1
+                    } else {
+                        *self.black.control.entry(pos).or_insert(0) += 1
+                    }
+                }
+            }
+            None => (),
+        }
+    }
+
+    fn remove_control(&mut self, from: &Pos) {
+        match self.board[from.index()] {
+            Some(p) => {
+                let base = self.get_theoric_moves(from, true);
+                let mut remove;
+                let map = if p.color {
+                    &mut self.white
+                } else {
+                    &mut self.black
+                };
+                for pos in base {
+                    remove = false;
+                    if let Some(value) = map.control.get_mut(&pos) {
+                        if *value > 0 {
+                            *value -= 1;
+                            remove = *value == 0;
+                        }
+                    }
+                    if remove {
+                        map.control.remove(&pos);
+                    }
+                }
+            }
+            None => (),
+        }
+    }
+}
+
+// movement
+
+impl Engin {
+    fn get_theoric_moves(&self, from: &Pos, control: bool) -> Vec<Pos> {
         let mut base = vec![];
         let index = (from.i * 8 + from.j) as usize;
         let cell = self.board[index];
         match cell {
             Some(Piece { color, kind }) => match kind {
-                PieceKind::King => Self::king(&self, &from, &mut base, color),
+                PieceKind::King => Self::king(&self, &from, &mut base, color, control),
                 PieceKind::Queen => Self::move_line(
                     &self,
                     &from,
@@ -148,7 +211,7 @@ impl Engin {
                         [-1, -2],
                     ],
                 ),
-                PieceKind::Pawn => Self::pawn(&self, &from, &mut base, color),
+                PieceKind::Pawn => Self::pawn(&self, &from, &mut base, color, control),
             },
             None => (),
         }
@@ -156,11 +219,12 @@ impl Engin {
     }
 
     pub fn get_moves(&self, from: &Pos) -> Vec<Pos> {
-        let mut base = Self::get_theoric_moves(self, from);
+        let mut base = Self::get_theoric_moves(self, from, false);
 
         base
     }
 
+    // rook bishop queen
     fn move_line(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, dir: &Vec<[i8; 2]>) {
         for d in dir {
             let mut i: i8 = from.i + d[0];
@@ -183,6 +247,7 @@ impl Engin {
         }
     }
 
+    // knight
     fn patern(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, dir: &Vec<[i8; 2]>) {
         for d in dir {
             let i: i8 = from.i + d[0];
@@ -203,7 +268,8 @@ impl Engin {
         }
     }
 
-    fn pawn(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool) {
+    // pawn
+    fn pawn(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, control: bool) {
         // la couleur importe pas, si tu joue un pion il avance vers 0 le reste avance vers 7
         // si tu joue les blanc les blanc il avance vers 0
         // si tu joue les noir les noir avance vers 0
@@ -226,7 +292,11 @@ impl Engin {
                         base.push(Pos::new_c(from.i + dir, from.j - 1));
                     }
                 }
-                None => (),
+                None => {
+                    if control {
+                        base.push(Pos::new_c(from.i + dir, from.j - 1));
+                    }
+                }
             }
         }
         if from.j < 7 {
@@ -237,7 +307,11 @@ impl Engin {
                         base.push(Pos::new_c(from.i + dir, from.j + 1));
                     }
                 }
-                None => (),
+                None => {
+                    if control {
+                        base.push(Pos::new_c(from.i + dir, from.j + 1));
+                    }
+                }
             }
         }
         if !(self.played ^ color_piece) {
@@ -261,7 +335,8 @@ impl Engin {
         }
     }
 
-    fn king(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool) {
+    // king
+    fn king(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, control: bool) {
         // manque juste le rock
         for y in from.i - 1..from.i + 2 {
             for x in from.j - 1..from.j + 2 {
@@ -276,12 +351,12 @@ impl Engin {
                             }
                             None => match color_piece {
                                 true => {
-                                    if !self.black.control.contains_key(&look) {
+                                    if !self.black.control.contains_key(&look) || control {
                                         base.push(look);
                                     }
                                 }
                                 false => {
-                                    if !self.white.control.contains_key(&look) {
+                                    if !self.white.control.contains_key(&look) || control {
                                         base.push(look);
                                     }
                                 }
