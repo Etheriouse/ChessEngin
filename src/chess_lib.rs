@@ -81,15 +81,15 @@ pub mod chess_lib {
         }
     }
 
-    #[derive(PartialEq, Eq)]
+    #[derive(PartialEq, Eq, Debug, Hash, Clone, Copy)]
     pub struct Pos {
-        i: u8,
-        j: u8,
+        pub i: i8,
+        pub j: i8,
     }
 
     impl Pos {
-        pub fn new_c(x: u8, y: u8) -> Self {
-            Self { i: y, j: x }
+        pub fn new_c(i: i8, j: i8) -> Self {
+            Self { i, j }
         }
 
         pub fn new(str: &str) -> Option<Self> {
@@ -107,15 +107,22 @@ pub mod chess_lib {
             }
 
             Some(Self {
-                i: (number as u8) - b'1',
-                j: (letter as u8) - b'a',
+                i: 7 - ((number as u8) - b'1') as i8,
+                j: ((letter as u8) - b'a') as i8,
             })
+        }
+
+        pub fn index(&self) -> usize {
+            return (self.i * 8 + self.j) as usize;
+        }
+        pub fn indexa(&self, i: i8, j: i8) -> usize {
+            return ((self.i+i) * 8 + (self.j+j)) as usize;
         }
     }
 
     impl fmt::Display for Pos {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            return write!(f, "{}{}", (b'a' + self.j) as char, self.i + 1);
+            return write!(f, "{}{}", (b'a' + (self.j) as u8) as char, 8 - self.i);
         }
     }
 }
