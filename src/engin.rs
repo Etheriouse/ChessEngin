@@ -3,14 +3,15 @@ use std::{collections::HashMap, vec, write};
 
 use crate::chess_lib::chess_lib::{Piece, PieceKind, Pos};
 
-struct PlayerData {
-    eat: HashMap<Piece, u8>,
+pub struct PlayerData {
+    pub eat: HashMap<Piece, u8>,
     control: HashMap<Pos, u8>,
+    king: Pos,
 }
 
 pub struct Engin {
     board: [Option<Piece>; 64],
-    played: bool,
+    pub played: bool,
 
     white: PlayerData,
     black: PlayerData,
@@ -31,10 +32,12 @@ impl Engin {
             white: PlayerData {
                 eat: HashMap::new(),
                 control: HashMap::new(),
+                king: Pos::new_c(4, if played { 0 } else { 7 }),
             },
             black: PlayerData {
                 eat: HashMap::new(),
                 control: HashMap::new(),
+                king: Pos::new_c(4, if played { 0 } else { 7 }),
             },
             history: vec![],
             pass: None,
@@ -81,10 +84,12 @@ impl Engin {
             white: PlayerData {
                 eat: HashMap::new(),
                 control: HashMap::new(),
+                king: Pos::new_c(4, if played { 0 } else { 7 }),
             },
             black: PlayerData {
                 eat: HashMap::new(),
                 control: HashMap::new(),
+                king: Pos::new_c(4, if played { 0 } else { 7 }),
             },
             history: vec![],
             pass: None,
@@ -97,6 +102,18 @@ impl Engin {
 
     pub fn get(&self, from: &Pos) -> &Option<Piece> {
         return &self.board[from.index()];
+    }
+
+    pub fn data(&self, color: bool) -> &PlayerData {
+        return if color { &self.white } else { &self.black };
+    }
+
+    pub fn modify_data(&mut self, color: bool) -> &mut PlayerData {
+        return if color {
+            &mut self.white
+        } else {
+            &mut self.black
+        };
     }
 
     // get all possible move without check the king rule
@@ -370,6 +387,35 @@ impl Engin {
                 }
             }
         }
+    }
+}
+
+// king
+impl Engin {
+    pub fn check(&self, color: bool) -> bool {
+        return if color {
+            self.black.control.contains_key(&self.white.king)
+        } else {
+            self.white.control.contains_key(&self.black.king)
+        };
+    }
+
+    pub fn checkmate(&self, color: bool) -> bool {
+        return false;
+    }
+
+    pub fn stalemate(&self, color: bool) -> bool {
+        return false;
+    }
+}
+
+impl Engin {
+    pub fn move_piece(&mut self, from: &Pos, to: &Pos) {
+
+    }
+
+    fn eat(&mut self, from: &Pos, to: &Pos) {
+
     }
 }
 

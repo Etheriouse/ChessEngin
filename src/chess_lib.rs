@@ -2,13 +2,13 @@ pub mod chess_lib {
     use core::fmt;
     use std::write;
 
-    #[derive(Clone, Copy)]
+    #[derive(PartialEq, Eq, Hash, Clone, Copy)]
     pub struct Piece {
         pub color: bool,
         pub kind: PieceKind,
     }
 
-    #[derive(PartialEq, Eq, Copy, Clone)]
+    #[derive(PartialEq, Eq, Hash, Copy, Clone)]
     pub enum PieceKind {
         King,
         Queen,
