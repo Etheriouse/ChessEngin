@@ -38,6 +38,7 @@ fn main() {
 
     let rook = Pos::new("g2").unwrap();
     let mut chess = Engin::classic(true);
+    chess.update_control();
     println!("{}", chess);
     // chess.place(Piece::new(true, PieceKind::Bishop), &rook);
 
@@ -60,6 +61,9 @@ fn main() {
     let white_piece = Color::new(226, 222, 212, 255);
     let black_piece = Color::new(98, 102, 106, 255);
 
+    let white_controle = Color::new(255, 255, 255, 70);
+    let black_controle = Color::new(0, 0, 0, 70);
+
     // Interactions
     let possible = Color::new(139, 175, 131, 255);
     let last_move = Color::new(166, 160, 120, 255);
@@ -75,6 +79,8 @@ fn main() {
 
     // Accent
     let text_accent = Color::new(201, 185, 154, 255); // #C9B99A
+
+    let view_control = true;
 
     let mut width: i32 = 1600;
     let mut height: i32 = 900;
@@ -115,9 +121,11 @@ fn main() {
     rl.set_target_fps(30);
 
     let mut from: Option<Pos> = None;
+    let mut turn = true; // white alway start
+    // true => ia false => humain
+    let opp = false;
 
-    rl.get_mouse_position();
-
+    // println!("white king: {}", chess.data(true).king);
     // chess
     //     .modify_data(true)
     //     .eat
@@ -149,13 +157,26 @@ fn main() {
         match from {
             None => {
                 if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-                    from = Some(Pos::new_c(i, j))
+                    // check si can from
+
+                    if match chess.get(&Pos::new_c(i, j)) {
+                        Some(piece) => !(piece.color ^ if opp { chess.played } else { turn }),
+                        None => false,
+                    } {
+                        from = Some(Pos::new_c(i, j));
+                    }
                 }
             }
-            Some(pos) => {
+            Some(_) => {
                 if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
-                    chess.move_piece(&pos, &Pos::new_c(i, j));
-                    from = None;
+                    if opp {
+                        chess.move_piece(&mut from, &Pos::new_c(i, j), chess.played);
+                        // resolver.move_piece(chess);
+                    } else {
+                        if chess.move_piece(&mut from, &Pos::new_c(i, j), turn) {
+                            turn = !turn;
+                        }
+                    }
                 }
             }
         }
@@ -315,12 +336,20 @@ fn main() {
                 }
                 draw.draw_rectangle(
                     j as i32 * sprite_size + xstart_chess,
-                    ((i as i32 * sprite_size) + ystart_chess),
+                    (i as i32 * sprite_size) + ystart_chess,
                     sprite_size,
                     sprite_size,
                     if match from {
                         None => false,
-                        Some(p) => p.i == i && p.j == j,
+                        Some(p) => {
+                            (p.i == i && p.j == j)
+                                && match chess.get(&p) {
+                                    Some(piece) => {
+                                        !(piece.color ^ if opp { chess.played } else { turn })
+                                    }
+                                    None => false,
+                                }
+                        }
                     } {
                         selected
                     } else if king_case_check {
@@ -333,6 +362,25 @@ fn main() {
                         if (i + j) % 2 == 0 { light } else { dark }
                     },
                 );
+
+                if view_control {
+                    if chess.is_controled(true, &Pos::new_c(i, j)) {
+                        draw.draw_rectangle(
+                    j as i32 * sprite_size + xstart_chess,
+                    (i as i32 * sprite_size) + ystart_chess,
+                    sprite_size,
+                    sprite_size, white_controle);
+                    }
+                    if chess.is_controled(false, &Pos::new_c(i, j)) {
+                        draw.draw_rectangle(
+                    j as i32 * sprite_size + xstart_chess,
+                    (i as i32 * sprite_size) + ystart_chess,
+                    sprite_size,
+                    sprite_size, black_controle);
+                    }
+               
+                }
+
                 match chess.get(&Pos::new_c(i, j)) {
                     Some(p) => draw.draw_texture_pro(
                         match p.kind {

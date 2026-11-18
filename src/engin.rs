@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{collections::HashMap, vec, write};
+use std::{collections::HashMap, print, println, vec, write};
 
 use crate::chess_lib::chess_lib::{Piece, PieceKind, Pos};
 
@@ -84,12 +84,12 @@ impl Engin {
             white: PlayerData {
                 eat: HashMap::new(),
                 control: HashMap::new(),
-                king: Pos::new_c(4, if played { 0 } else { 7 }),
+                king: Pos::new_c(if played { 0 } else { 7 }, 4),
             },
             black: PlayerData {
                 eat: HashMap::new(),
                 control: HashMap::new(),
-                king: Pos::new_c(4, if played { 0 } else { 7 }),
+                king: Pos::new_c(if played { 0 } else { 7 }, 4),
             },
             history: vec![],
             pass: None,
@@ -130,6 +130,12 @@ impl Engin {
                 self.add_control(&Pos::new_c(i, j));
             }
         }
+
+        print!("white control");
+        for (k, v) in self.white.control.iter() {
+            print!("({}: {}), ", k, v);
+        }
+        println!("");
     }
 
     fn add_control(&mut self, from: &Pos) {
@@ -173,6 +179,12 @@ impl Engin {
             }
             None => (),
         }
+    }
+
+    pub fn is_controled(&self, color: bool, look: &Pos) -> bool {
+        return if color { &self.white } else { &self.black }
+            .control
+            .contains_key(&look);
     }
 }
 
@@ -256,8 +268,8 @@ impl Engin {
                         if color ^ color_piece {
                             // adverse color
                             base.push(Pos::new_c(i, j));
-                            break;
                         }
+                        break;
                     }
                     None => base.push(Pos::new_c(i, j)),
                 }
@@ -335,22 +347,25 @@ impl Engin {
                 }
             }
         }
-        if !(self.played ^ color_piece) {
-            if from.i == 6 {
+        if !control {
+            println!("call from controle {}", control);
+            if !(self.played ^ color_piece) {
                 if self.board[from.indexa(-1, 0)].is_none() {
                     base.push(Pos::new_c(from.i - 1, from.j));
-                    if self.board[from.indexa(-2, 0)].is_none() {
-                        base.push(Pos::new_c(from.i - 2, from.j));
+                    if from.i == 6 {
+                        if self.board[from.indexa(-2, 0)].is_none() {
+                            base.push(Pos::new_c(from.i - 2, from.j));
+                        }
                     }
                 }
-            }
-        } else {
-            if from.i == 1 {
+            } else {
                 if self.board[from.indexa(1, 0)].is_none() {
-                    if self.board[from.indexa(2, 0)].is_none() {
-                        base.push(Pos::new_c(from.i + 2, from.j));
-                    }
                     base.push(Pos::new_c(from.i + 1, from.j));
+                    if from.i == 1 {
+                        if self.board[from.indexa(2, 0)].is_none() {
+                            base.push(Pos::new_c(from.i + 2, from.j));
+                        }
+                    }
                 }
             }
         }
@@ -396,6 +411,7 @@ impl Engin {
         return if color {
             self.black.control.contains_key(&self.white.king)
         } else {
+            // println!("{:?}", self.white.control);
             self.white.control.contains_key(&self.black.king)
         };
     }
@@ -410,12 +426,56 @@ impl Engin {
 }
 
 impl Engin {
-    pub fn move_piece(&mut self, from: &Pos, to: &Pos) {
-
+    // return if moved piece
+    pub fn move_piece(&mut self, fromopt: &mut Option<Pos>, to: &Pos, player: bool) -> bool {
+        return match fromopt {
+            Some(from) => {
+                for pos in self.get_moves(from).iter() {
+                    // un return true dedans la
+                    if pos == to {
+                        self.eat(from, to, player);
+                        return true;
+                    };
+                }
+                match self.get(to) {
+                    Some(_) => {
+                        *fromopt = Some(*to); // 
+                    }
+                    None => {
+                        *fromopt = None; // release from after moved piece   
+                    }
+                }
+                return false;
+            }
+            None => false,
+        };
     }
 
-    fn eat(&mut self, from: &Pos, to: &Pos) {
+    fn eat(&mut self, from: &Pos, to: &Pos, player: bool) {
+        let eated = self.board[to.index()];
+        let piece = self.board[from.index()];
 
+        // check pass is pawn
+        // check promotion if pawn
+        // check rock if king
+        // maj data().king if king moved
+
+        match eated {
+            Some(eated) => {
+                *(if player {
+                    &mut self.white
+                } else {
+                    &mut self.black
+                })
+                .eat
+                .entry(eated)
+                .or_insert(0) += 1;
+            }
+            None => (),
+        }
+        self.board[to.index()] = piece;
+        self.board[from.index()] = None;
+        self.update_control(); // TEMPORAIRE A OPTIMISER PLUSTARD
     }
 }
 
