@@ -12,6 +12,10 @@ use std::{borrow, ops::Deref, println};
 // - mettre a jour la pass si pass != None et que autre piece est jouer ou pawn jour ailleurs
 // https://fr.wikipedia.org/wiki/En_passant_(%C3%A9checs)
 
+// systeme de coordonée uni directionnel, blanc en bas noir en haut
+// juste inverser lechequier a l'affichage
+// du coup pawn noir toujours vers (abcdefgh)1 et pawn blanc tjr vers (abcdefgh)8
+
 use sola_raylib::prelude::*;
 
 fn main() {
@@ -153,27 +157,30 @@ fn main() {
 
         let j = ((pos.x - xstart_chess as f32) / (sprite_size as f32)) as i8;
         let i = ((pos.y - ystart_chess as f32) / (sprite_size as f32)) as i8;
+        
+        let head_to = if chess.played {Pos::new_c(7-i, 7-j)} else {Pos::new_c(i, j)};
 
         match from {
             None => {
                 if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
                     // check si can from
 
-                    if match chess.get(&Pos::new_c(i, j)) {
+
+                    if match chess.get(&head_to) {
                         Some(piece) => !(piece.color ^ if opp { chess.played } else { turn }),
                         None => false,
                     } {
-                        from = Some(Pos::new_c(i, j));
+                        from = Some(head_to);
                     }
                 }
             }
             Some(_) => {
                 if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
                     if opp {
-                        chess.move_piece(&mut from, &Pos::new_c(i, j), chess.played);
+                        chess.move_piece(&mut from, &head_to, chess.played);
                         // resolver.move_piece(chess);
                     } else {
-                        if chess.move_piece(&mut from, &Pos::new_c(i, j), turn) {
+                        if chess.move_piece(&mut from, &head_to, turn) {
                             turn = !turn;
                         }
                     }
@@ -193,11 +200,11 @@ fn main() {
         //     }
         // }
 
-        let mut draw = rl.begin_drawing(&thread);
+        let mut buffer = rl.begin_drawing(&thread);
 
-        draw.clear_background(background);
+        buffer.clear_background(background);
 
-        draw.draw_text(
+        buffer.draw_text(
             "you:",
             10,
             10,
@@ -217,8 +224,9 @@ fn main() {
         });
 
         let mut i_w = 0;
+
         for (piece, value) in entries_white {
-            draw.draw_texture_pro(
+            buffer.draw_texture_pro(
                 match piece.kind {
                     PieceKind::King => &t_king,
                     PieceKind::Queen => &t_queen,
@@ -242,7 +250,7 @@ fn main() {
                     black_piece
                 },
             );
-            draw.draw_text(
+            buffer.draw_text(
                 &value.to_string(),
                 ((sprite_size as f32) * 1.5) as i32,
                 ((i_w as i32 * (sprite_size + 20)) as f32 + (height as f32 * 0.15)) as i32,
@@ -252,7 +260,7 @@ fn main() {
             i_w += 1;
         }
 
-        draw.draw_text(
+        buffer.draw_text(
             "they:",
             10 + xstart_chess + sprite_size * 8 as i32,
             10,
@@ -273,7 +281,7 @@ fn main() {
 
         let mut i_b: i32 = 0;
         for (piece, value) in entries_black {
-            draw.draw_texture_pro(
+            buffer.draw_texture_pro(
                 match piece.kind {
                     PieceKind::King => &t_king,
                     PieceKind::Queen => &t_queen,
@@ -298,7 +306,7 @@ fn main() {
                     black_piece
                 },
             );
-            draw.draw_text(
+            buffer.draw_text(
                 &value.to_string(),
                 (xstart_chess as f32 + (sprite_size as f32) * 9.5) as i32,
                 ((i_b as i32 * (sprite_size + 20)) as f32 + (height as f32 * 0.15)) as i32,
@@ -311,19 +319,28 @@ fn main() {
         // for (key, value) in chess.data(true).eat.iter() {}
 
         //chess.data(true)
+
+        let legal_move = chess.selected_movement(&from);
+
         for i in 0..8 {
-            draw.draw_text(
-                &(i + 1).to_string(),
+            buffer.draw_text(
+                &(if chess.played { 8 - i } else { i + 1 }).to_string(),
                 xstart_chess - (sprite_size as f32 * 0.6) as i32,
                 i as i32 * sprite_size + ystart_chess + (sprite_size as f32 * 0.2) as i32,
                 50,
                 text_secondary,
             );
             for j in 0..8 {
+                let head = if chess.played {
+                    Pos::new_c(7 - i, 7 - j)
+                } else {
+                    Pos::new_c(i, j)
+                };
+
                 let mut king_case_check = false;
                 let mut king_case_checkmate = false;
                 let mut king_case_stalemate = false;
-                match chess.get(&Pos::new_c(i, j)) {
+                match chess.get(&head) {
                     Some(p) => match p.kind {
                         PieceKind::King => {
                             king_case_check = chess.check(p.color);
@@ -334,7 +351,7 @@ fn main() {
                     },
                     None => (),
                 }
-                draw.draw_rectangle(
+                buffer.draw_rectangle(
                     j as i32 * sprite_size + xstart_chess,
                     (i as i32 * sprite_size) + ystart_chess,
                     sprite_size,
@@ -342,13 +359,7 @@ fn main() {
                     if match from {
                         None => false,
                         Some(p) => {
-                            (p.i == i && p.j == j)
-                                && match chess.get(&p) {
-                                    Some(piece) => {
-                                        !(piece.color ^ if opp { chess.played } else { turn })
-                                    }
-                                    None => false,
-                                }
+                            p.i == head.i && p.j == head.j
                         }
                     } {
                         selected
@@ -364,25 +375,30 @@ fn main() {
                 );
 
                 if view_control {
-                    if chess.is_controled(true, &Pos::new_c(i, j)) {
-                        draw.draw_rectangle(
-                    j as i32 * sprite_size + xstart_chess,
-                    (i as i32 * sprite_size) + ystart_chess,
-                    sprite_size,
-                    sprite_size, white_controle);
+                    if chess.is_controled(true, &head) {
+                        buffer.draw_circle(
+                            (j as i32 * sprite_size + xstart_chess)
+                                + (sprite_size as f32 * 0.5f32) as i32,
+                            ((i as i32 * sprite_size) + ystart_chess)
+                                + (sprite_size as f32 * 0.5f32) as i32,
+                            sprite_size as f32 * 0.3f32,
+                            white_controle,
+                        );
                     }
-                    if chess.is_controled(false, &Pos::new_c(i, j)) {
-                        draw.draw_rectangle(
-                    j as i32 * sprite_size + xstart_chess,
-                    (i as i32 * sprite_size) + ystart_chess,
-                    sprite_size,
-                    sprite_size, black_controle);
+                    if chess.is_controled(false, &head) {
+                        buffer.draw_circle(
+                            (j as i32 * sprite_size + xstart_chess)
+                                + (sprite_size as f32 * 0.5f32) as i32,
+                            ((i as i32 * sprite_size) + ystart_chess)
+                                + (sprite_size as f32 * 0.5f32) as i32,
+                            sprite_size as f32 * 0.3f32,
+                            black_controle,
+                        );
                     }
-               
                 }
 
-                match chess.get(&Pos::new_c(i, j)) {
-                    Some(p) => draw.draw_texture_pro(
+                match chess.get(&head) {
+                    Some(p) => buffer.draw_texture_pro(
                         match p.kind {
                             PieceKind::King => &t_king,
                             PieceKind::Queen => &t_queen,
@@ -404,13 +420,23 @@ fn main() {
                     ),
                     None => (),
                 }
+                if legal_move.contains(&head) {
+                    buffer.draw_circle(
+                        (j as i32 * sprite_size + xstart_chess)
+                            + (sprite_size as f32 * 0.5f32) as i32,
+                        ((i as i32 * sprite_size) + ystart_chess)
+                            + (sprite_size as f32 * 0.5f32) as i32,
+                        (sprite_size as f32 * 0.2f32),
+                        possible,
+                    );
+                }
             }
         }
 
         for i in 0..8 {
-            draw.draw_text(
-                &((b'a' + i as u8) as char).to_string(),
-                xstart_chess + (sprite_size as f32 * 0.4) as i32 + sprite_size * i,
+            buffer.draw_text(
+                &((if chess.played { b'a' + i } else { b'h' - i } as u8) as char).to_string(),
+                xstart_chess + (sprite_size as f32 * 0.4) as i32 + sprite_size * i as i32,
                 ystart_chess + sprite_size * 8,
                 50,
                 text_secondary,

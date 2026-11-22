@@ -32,12 +32,12 @@ impl Engin {
             white: PlayerData {
                 eat: HashMap::new(),
                 control: HashMap::new(),
-                king: Pos::new_c(4, if played { 0 } else { 7 }),
+                king: Pos::new_c(0, 3),
             },
             black: PlayerData {
                 eat: HashMap::new(),
                 control: HashMap::new(),
-                king: Pos::new_c(4, if played { 0 } else { 7 }),
+                king: Pos::new_c(7, 3),
             },
             history: vec![],
             pass: None,
@@ -50,8 +50,8 @@ impl Engin {
             Some(Piece::new(true, PieceKind::Rook)),
             Some(Piece::new(true, PieceKind::Knight)),
             Some(Piece::new(true, PieceKind::Bishop)),
-            Some(Piece::new(true, PieceKind::Queen)),
             Some(Piece::new(true, PieceKind::King)),
+            Some(Piece::new(true, PieceKind::Queen)),
             Some(Piece::new(true, PieceKind::Bishop)),
             Some(Piece::new(true, PieceKind::Knight)),
             Some(Piece::new(true, PieceKind::Rook)),
@@ -60,23 +60,16 @@ impl Engin {
             Some(Piece::new(false, PieceKind::Rook)),
             Some(Piece::new(false, PieceKind::Knight)),
             Some(Piece::new(false, PieceKind::Bishop)),
-            Some(Piece::new(false, PieceKind::Queen)),
             Some(Piece::new(false, PieceKind::King)),
+            Some(Piece::new(false, PieceKind::Queen)),
             Some(Piece::new(false, PieceKind::Bishop)),
             Some(Piece::new(false, PieceKind::Knight)),
             Some(Piece::new(false, PieceKind::Rook)),
         ];
-        if !played {
-            base[0..8].copy_from_slice(&white);
-            base[8..16].copy_from_slice(&[Some(Piece::new(true, PieceKind::Pawn)); 8]);
-            base[48..56].copy_from_slice(&[Some(Piece::new(false, PieceKind::Pawn)); 8]);
-            base[56..64].copy_from_slice(&black);
-        } else {
-            base[56..64].copy_from_slice(&white);
-            base[48..56].copy_from_slice(&[Some(Piece::new(true, PieceKind::Pawn)); 8]);
-            base[8..16].copy_from_slice(&[Some(Piece::new(false, PieceKind::Pawn)); 8]);
-            base[0..8].copy_from_slice(&black);
-        }
+        base[0..8].copy_from_slice(&white);
+        base[8..16].copy_from_slice(&[Some(Piece::new(true, PieceKind::Pawn)); 8]);
+        base[48..56].copy_from_slice(&[Some(Piece::new(false, PieceKind::Pawn)); 8]);
+        base[56..64].copy_from_slice(&black);
 
         Self {
             board: base,
@@ -84,12 +77,12 @@ impl Engin {
             white: PlayerData {
                 eat: HashMap::new(),
                 control: HashMap::new(),
-                king: Pos::new_c(if played { 0 } else { 7 }, 4),
+                king: Pos::new_c(0, 3),
             },
             black: PlayerData {
                 eat: HashMap::new(),
                 control: HashMap::new(),
-                king: Pos::new_c(if played { 0 } else { 7 }, 4),
+                king: Pos::new_c(7, 3),
             },
             history: vec![],
             pass: None,
@@ -303,11 +296,10 @@ impl Engin {
 
     // pawn
     fn pawn(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, control: bool) {
-        // la couleur importe pas, si tu joue un pion il avance vers 0 le reste avance vers 7
-        // si tu joue les blanc les blanc il avance vers 0
-        // si tu joue les noir les noir avance vers 0
+        // black en letter 8 et white en letter 1
 
-        let dir = if self.played { -1 } else { 1 };
+        let dir = if color_piece { 1 } else { -1 }; // si white alors deplacement vers 8
+        let start = if color_piece { 1 } else { 6 };
 
         if let Some(p) = self.pass {
             if (from.j - p.j.abs() == 1) && (from.i == p.i - dir) {
@@ -348,24 +340,11 @@ impl Engin {
             }
         }
         if !control {
-            println!("call from controle {}", control);
-            if !(self.played ^ color_piece) {
-                if self.board[from.indexa(-1, 0)].is_none() {
-                    base.push(Pos::new_c(from.i - 1, from.j));
-                    if from.i == 6 {
-                        if self.board[from.indexa(-2, 0)].is_none() {
-                            base.push(Pos::new_c(from.i - 2, from.j));
-                        }
-                    }
-                }
-            } else {
-                if self.board[from.indexa(1, 0)].is_none() {
-                    base.push(Pos::new_c(from.i + 1, from.j));
-                    if from.i == 1 {
-                        if self.board[from.indexa(2, 0)].is_none() {
-                            base.push(Pos::new_c(from.i + 2, from.j));
-                        }
-                    }
+            if self.board[from.indexa(dir, 0)].is_none() {
+                base.push(Pos::new_c(from.i + dir, from.j));
+
+                if self.board[from.indexa(2 * dir, 0)].is_none() && start == from.i {
+                    base.push(Pos::new_c(from.i + (2 * dir), from.j));
                 }
             }
         }
@@ -476,6 +455,14 @@ impl Engin {
         self.board[to.index()] = piece;
         self.board[from.index()] = None;
         self.update_control(); // TEMPORAIRE A OPTIMISER PLUSTARD
+        
+    }
+
+    pub fn selected_movement(&self, from: &Option<Pos>) -> Vec<Pos> {
+        return match from {
+            None => vec![],
+            Some(pos) => self.get_moves(pos),
+        };
     }
 }
 
