@@ -5,7 +5,27 @@ use crate::{
     chess_lib::chess_lib::{Piece, PieceKind, Pos},
     engin::Engin,
 };
-use std::{borrow, ops::Deref, println};
+use std::{println};
+
+
+/* 
+print j = 97+'{j}'
+      i = 8-i
+
+      0, 0 => a8
+      7, 7 => 1h
+
+      7, 0 => a1
+  j
+i
+[ 0 1 2 3
+0 [ . . . .]
+1 []
+...
+7 []
+]
+
+*/
 
 // todo a faire pour la pass
 // - mettre a jour la pass si pawn moved en 2
@@ -19,40 +39,16 @@ use std::{borrow, ops::Deref, println};
 use sola_raylib::prelude::*;
 
 fn main() {
-    let piece = Piece {
-        color: true,
-        kind: PieceKind::Knight,
-    };
-
-    let a8 = Pos::new("e7");
-    let a1 = Pos::new_c(4, 4);
-
-    println!("{}", piece);
-    println!(
-        "a8: {} a1: {}",
-        match a8 {
-            Some(p) => p,
-            None => {
-                println!("undefined pos");
-                return;
-            }
-        },
-        a1
-    );
-
-    let rook = Pos::new("g2").unwrap();
+    
     let mut chess = Engin::classic(true);
-    chess.update_control();
-    println!("{}", chess);
-    // chess.place(Piece::new(true, PieceKind::Bishop), &rook);
+    chess.move_piece(&mut Pos::new("e7"), &Pos::new("e5").unwrap(), true);
+    chess.move_piece(&mut Pos::new("f2"), &Pos::new("f3").unwrap(), true);
+    chess.move_piece(&mut Pos::new("e1"), &Pos::new("h4").unwrap(), true);
 
-    let moves = chess.get_moves(&rook);
-    let show = moves
-        .iter()
-        .map(|p| p.to_string()) // Appelle automatiquement votre implémentation de Display
-        .collect::<Vec<_>>()
-        .join(", ");
-    println!("possible move for {}: [{:?}]", rook, show);
+    println!("check: {}", chess.check(true));
+    println!("{}", chess);
+
+    return;
 
     // Application
     let background = Color::new(32, 32, 32, 255);
@@ -65,12 +61,9 @@ fn main() {
     let white_piece = Color::new(226, 222, 212, 255);
     let black_piece = Color::new(98, 102, 106, 255);
 
-    let white_controle = Color::new(255, 255, 255, 70);
-    let black_controle = Color::new(0, 0, 0, 70);
-
     // Interactions
     let possible = Color::new(139, 175, 131, 255);
-    let last_move = Color::new(166, 160, 120, 255);
+    let _last_move = Color::new(166, 160, 120, 255);
     let selected = Color::new(214, 189, 131, 255);
     let check = Color::new(182, 92, 92, 255);
     let checkmate = Color::new(132, 47, 54, 255);
@@ -79,12 +72,10 @@ fn main() {
     // textes
     let text_primary = Color::new(226, 222, 212, 255); // #E2DED4
     let text_secondary = Color::new(160, 158, 150, 255); // #A09E96
-    let text_disabled = Color::new(100, 100, 96, 255); // #646460
+    let _text_disabled = Color::new(100, 100, 96, 255); // #646460
 
     // Accent
-    let text_accent = Color::new(201, 185, 154, 255); // #C9B99A
-
-    let view_control = true;
+    let _text_accent = Color::new(201, 185, 154, 255); // #C9B99A
 
     let mut width: i32 = 1600;
     let mut height: i32 = 900;
@@ -374,29 +365,6 @@ fn main() {
                     },
                 );
 
-                if view_control {
-                    if chess.is_controled(true, &head) {
-                        buffer.draw_circle(
-                            (j as i32 * sprite_size + xstart_chess)
-                                + (sprite_size as f32 * 0.5f32) as i32,
-                            ((i as i32 * sprite_size) + ystart_chess)
-                                + (sprite_size as f32 * 0.5f32) as i32,
-                            sprite_size as f32 * 0.3f32,
-                            white_controle,
-                        );
-                    }
-                    if chess.is_controled(false, &head) {
-                        buffer.draw_circle(
-                            (j as i32 * sprite_size + xstart_chess)
-                                + (sprite_size as f32 * 0.5f32) as i32,
-                            ((i as i32 * sprite_size) + ystart_chess)
-                                + (sprite_size as f32 * 0.5f32) as i32,
-                            sprite_size as f32 * 0.3f32,
-                            black_controle,
-                        );
-                    }
-                }
-
                 match chess.get(&head) {
                     Some(p) => buffer.draw_texture_pro(
                         match p.kind {
@@ -426,7 +394,7 @@ fn main() {
                             + (sprite_size as f32 * 0.5f32) as i32,
                         ((i as i32 * sprite_size) + ystart_chess)
                             + (sprite_size as f32 * 0.5f32) as i32,
-                        (sprite_size as f32 * 0.2f32),
+                        sprite_size as f32 * 0.2f32,
                         possible,
                     );
                 }

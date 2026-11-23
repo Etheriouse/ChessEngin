@@ -5,7 +5,6 @@ use crate::chess_lib::chess_lib::{Piece, PieceKind, Pos};
 
 pub struct PlayerData {
     pub eat: HashMap<Piece, u8>,
-    control: HashMap<Pos, u8>,
     king: Pos,
 }
 
@@ -31,12 +30,10 @@ impl Engin {
             played,
             white: PlayerData {
                 eat: HashMap::new(),
-                control: HashMap::new(),
                 king: Pos::new_c(0, 3),
             },
             black: PlayerData {
                 eat: HashMap::new(),
-                control: HashMap::new(),
                 king: Pos::new_c(7, 3),
             },
             history: vec![],
@@ -66,22 +63,20 @@ impl Engin {
             Some(Piece::new(false, PieceKind::Knight)),
             Some(Piece::new(false, PieceKind::Rook)),
         ];
-        base[0..8].copy_from_slice(&white);
-        base[8..16].copy_from_slice(&[Some(Piece::new(true, PieceKind::Pawn)); 8]);
-        base[48..56].copy_from_slice(&[Some(Piece::new(false, PieceKind::Pawn)); 8]);
-        base[56..64].copy_from_slice(&black);
+        base[0..8].copy_from_slice(&black);
+        base[8..16].copy_from_slice(&[Some(Piece::new(false, PieceKind::Pawn)); 8]);
+        base[48..56].copy_from_slice(&[Some(Piece::new(true, PieceKind::Pawn)); 8]);
+        base[56..64].copy_from_slice(&white);
 
         Self {
             board: base,
             played,
             white: PlayerData {
                 eat: HashMap::new(),
-                control: HashMap::new(),
                 king: Pos::new_c(0, 3),
             },
             black: PlayerData {
                 eat: HashMap::new(),
-                control: HashMap::new(),
                 king: Pos::new_c(7, 3),
             },
             history: vec![],
@@ -114,70 +109,76 @@ impl Engin {
 
 // controle
 impl Engin {
-    pub fn update_control(&mut self) {
-        self.white.control.clear();
-        self.black.control.clear();
-
-        for i in 0..8 {
-            for j in 0..8 {
-                self.add_control(&Pos::new_c(i, j));
+    pub fn is_attack(&self, from: &Pos, camp: bool) -> bool {
+        // check patern
+        let knight = [
+            [2, 1],
+            [2, -1],
+            [-2, 1],
+            [-2, -1],
+            [1, 2],
+            [1, -2],
+            [-1, 2],
+            [-1, -2],
+        ];
+        for pos in knight {
+            let i = from.i + pos[0];
+            let j = from.j + pos[1];
+            if !(i < 8 && j < 8 && i >= 0 && j >= 0) {
+                continue;
+            }
+            if match self.board[((from.i + pos[0]) * 8 + from.j + pos[1]) as usize] {
+                Some(piece) => match piece.kind {
+                    PieceKind::Knight => return piece.color ^ camp,
+                    _ => continue,
+                },
+                None => false,
+            } {
+                return true;
             }
         }
 
-        print!("white control");
-        for (k, v) in self.white.control.iter() {
-            print!("({}: {}), ", k, v);
-        }
-        println!("");
-    }
+        let rook = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+        let bishop = [[1, 1], [-1, -1], [-1, 1], [1, -1]];
 
-    fn add_control(&mut self, from: &Pos) {
-        match self.board[from.index()] {
-            Some(p) => {
-                let base = self.get_theoric_moves(from, true);
-                for pos in base {
-                    if p.color {
-                        *self.white.control.entry(pos).or_insert(0) += 1
-                    } else {
-                        *self.black.control.entry(pos).or_insert(0) += 1
-                    }
+        for pos in rook {
+            let mut look = from.clone();
+            while look.i < 8 && look.j < 8 && look.i >= 0 && look.j >= 0 {
+                if match self.board[look.index()] {
+                    Some(piece) => match piece.kind {
+                        PieceKind::Queen => piece.color ^ camp,
+                        PieceKind::Rook => piece.color ^ camp,
+                        _ => break,
+                    },
+                    None => false,
+                } {
+                    return true;
                 }
+                look.i += pos[0];
+                look.j += pos[1];
             }
-            None => (),
         }
-    }
 
-    fn remove_control(&mut self, from: &Pos) {
-        match self.board[from.index()] {
-            Some(p) => {
-                let base = self.get_theoric_moves(from, true);
-                let mut remove;
-                let map = if p.color {
-                    &mut self.white
-                } else {
-                    &mut self.black
-                };
-                for pos in base {
-                    remove = false;
-                    if let Some(value) = map.control.get_mut(&pos) {
-                        if *value > 0 {
-                            *value -= 1;
-                            remove = *value == 0;
-                        }
-                    }
-                    if remove {
-                        map.control.remove(&pos);
-                    }
+        for pos in bishop {
+            let mut look = from.clone();
+            while look.i < 8 && look.j < 8 && look.i >= 0 && look.j >= 0 {
+                if match self.board[look.index()] {
+                    Some(piece) => match piece.kind {
+                        PieceKind::Queen => piece.color ^ camp,
+                        PieceKind::Bishop => piece.color ^ camp,
+                        PieceKind::King => false, // self
+                        _ => break,
+                    },
+                    None => false,
+                } {
+                    return true;
                 }
+                look.i += pos[0];
+                look.j += pos[1];
             }
-            None => (),
         }
-    }
 
-    pub fn is_controled(&self, color: bool, look: &Pos) -> bool {
-        return if color { &self.white } else { &self.black }
-            .control
-            .contains_key(&look);
+        return false;
     }
 }
 
@@ -298,53 +299,23 @@ impl Engin {
     fn pawn(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, control: bool) {
         // black en letter 8 et white en letter 1
 
-        let dir = if color_piece { 1 } else { -1 }; // si white alors deplacement vers 8
+        let dir = if color_piece { -1 } else { 1 }; // si white alors deplacement vers 8
         let start = if color_piece { 1 } else { 6 };
 
-        if let Some(p) = self.pass {
-            if (from.j - p.j.abs() == 1) && (from.i == p.i - dir) {
-                if self.board[p.index()].is_none() {
-                    base.push(p);
-                }
-            }
-        }
+        // println!("piece: {}", self.board[from.index()]);
+        // if let Some(p) = self.pass {
+        //     if (from.j - p.j.abs() == 1) && (from.i == p.i - dir) {
+        //         if self.board[p.index()].is_none() {
+        //             base.push(p);
+        //         }
+        //     }
+        // }
 
-        if from.j > 0 {
-            // eat to left
-            match self.board[from.indexa(dir, -1)] {
-                Some(p) => {
-                    if p.color ^ color_piece {
-                        base.push(Pos::new_c(from.i + dir, from.j - 1));
-                    }
-                }
-                None => {
-                    if control {
-                        base.push(Pos::new_c(from.i + dir, from.j - 1));
-                    }
-                }
-            }
-        }
-        if from.j < 7 {
-            // eat to right
-            match self.board[from.indexa(dir, 1)] {
-                Some(p) => {
-                    if p.color ^ color_piece {
-                        base.push(Pos::new_c(from.i + dir, from.j + 1));
-                    }
-                }
-                None => {
-                    if control {
-                        base.push(Pos::new_c(from.i + dir, from.j + 1));
-                    }
-                }
-            }
-        }
         if !control {
             if self.board[from.indexa(dir, 0)].is_none() {
                 base.push(Pos::new_c(from.i + dir, from.j));
-
-                if self.board[from.indexa(2 * dir, 0)].is_none() && start == from.i {
-                    base.push(Pos::new_c(from.i + (2 * dir), from.j));
+                if self.board[from.indexa(dir * 2, 0)].is_none() {
+                    base.push(Pos::new_c(from.i + (dir * 2), from.j));
                 }
             }
         }
@@ -360,22 +331,17 @@ impl Engin {
                         let look = Pos::new_c(y, x);
                         match self.board[(y * 8 + x) as usize] {
                             Some(Piece { color, kind: _ }) => {
-                                if color ^ color_piece {
+                                if ((color ^ color_piece) && self.is_attack(&look, color_piece))
+                                    || control
+                                {
                                     base.push(look);
                                 }
                             }
-                            None => match color_piece {
-                                true => {
-                                    if !self.black.control.contains_key(&look) || control {
-                                        base.push(look);
-                                    }
+                            None => {
+                                if self.is_attack(&look, color_piece) || control {
+                                    base.push(look);
                                 }
-                                false => {
-                                    if !self.white.control.contains_key(&look) || control {
-                                        base.push(look);
-                                    }
-                                }
-                            },
+                            }
                         }
                     }
                 }
@@ -387,12 +353,14 @@ impl Engin {
 // king
 impl Engin {
     pub fn check(&self, color: bool) -> bool {
-        return if color {
-            self.black.control.contains_key(&self.white.king)
-        } else {
-            // println!("{:?}", self.white.control);
-            self.white.control.contains_key(&self.black.king)
-        };
+        return self.is_attack(
+            if color {
+                &self.white.king
+            } else {
+                &self.white.king
+            },
+            color,
+        );
     }
 
     pub fn checkmate(&self, color: bool) -> bool {
@@ -454,8 +422,6 @@ impl Engin {
         }
         self.board[to.index()] = piece;
         self.board[from.index()] = None;
-        self.update_control(); // TEMPORAIRE A OPTIMISER PLUSTARD
-        
     }
 
     pub fn selected_movement(&self, from: &Option<Pos>) -> Vec<Pos> {

@@ -1,6 +1,6 @@
 pub mod chess_lib {
     use core::fmt;
-    use std::write;
+    use std::{println, write};
 
     #[derive(PartialEq, Eq, Hash, Clone, Copy)]
     pub struct Piece {
@@ -107,15 +107,16 @@ pub mod chess_lib {
             }
 
             Some(Self {
-                i: 7 - ((number as u8) - b'1') as i8,
+                i:  8-((number as u8 - b'0')) as i8,
                 j: ((letter as u8) - b'a') as i8,
             })
         }
 
         pub fn index(&self) -> usize {
-            return (self.i * 8 + self.j) as usize;
+            return ((self.i) * 8 + self.j) as usize;
         }
         pub fn indexa(&self, i: i8, j: i8) -> usize {
+            println!("{}", self.i);
             return ((self.i+i) * 8 + (self.j+j)) as usize;
         }
     }
