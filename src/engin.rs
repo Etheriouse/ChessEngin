@@ -60,7 +60,7 @@ impl Engin {
 
     fn move_line(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, dir: &Vec<[i8; 2]>) {
         for d in dir {
-            let mut look = from.clone();
+            let mut look = from.from(d[0], d[1]);
             while look.i < 8 && look.j < 8 && look.i >= 0 && look.j >= 0 {
                 match self.board[look.index()] {
                     Some(Piece { color, kind: _ }) => {
@@ -98,8 +98,6 @@ impl Engin {
     }
 
     fn pawn(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool) {
-        // black en letter 8 et white en letter 1
-
         let dir = if color_piece { -1 } else { 1 }; // vertical movement (i axis)
         let start = if color_piece { 6 } else { 1 }; // row 
 
