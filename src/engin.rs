@@ -5,6 +5,29 @@ use std::vec;
 
 use crate::chess::{Piece, Pos, SIZE, Type};
 
+const ROOK: &[[i8; 2]] = &[[1, 0], [-1, 0], [0, 1], [0, -1]];
+const BISHOP: &[[i8; 2]] = &[[1, 1], [1, -1], [-1, 1], [-1, -1]];
+const QUEEN: &[[i8; 2]] = &[
+    [1, 1],
+    [1, -1],
+    [-1, 1],
+    [-1, -1],
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+];
+const KNIGHT: &[[i8; 2]] = &[
+    [2, 1],
+    [2, -1],
+    [-2, 1],
+    [-2, -1],
+    [1, 2],
+    [1, -2],
+    [-1, 2],
+    [-1, -2],
+];
+
 pub struct Engin {
     board: [Option<Piece>; (SIZE * SIZE) as usize],
     played: bool,
@@ -20,37 +43,15 @@ impl Engin {
 
     fn theoretical_moves(&self, from: &Pos) -> Vec<Pos> {
         let mut base = vec![];
-        let rook = vec![[1, 0], [-1, 0], [0, 1], [0, -1]];
-        let bishop = vec![[1, 1], [1, -1], [-1, 1], [-1, -1]];
-        let queen = vec![
-            [1, 1],
-            [1, -1],
-            [-1, 1],
-            [-1, -1],
-            [1, 0],
-            [-1, 0],
-            [0, 1],
-            [0, -1],
-        ];
-        let knight = vec![
-            [2, 1],
-            [2, -1],
-            [-2, 1],
-            [-2, -1],
-            [1, 2],
-            [1, -2],
-            [-1, 2],
-            [-1, -2],
-        ];
 
         match self.board[from.index()] {
             None => (),
             Some(Piece { color, kind }) => match kind {
-                Type::Rook => self.move_line(from, &mut base, color, &rook),
-                Type::Bishop => self.move_line(from, &mut base, color, &bishop),
-                Type::Knight => self.patern(from, &mut base, color, &knight),
+                Type::Rook => self.move_line(from, &mut base, color, &ROOK),
+                Type::Bishop => self.move_line(from, &mut base, color, &BISHOP),
+                Type::Knight => self.patern(from, &mut base, color, &KNIGHT),
                 Type::King => (), //self.patern(from, &mut base, color, &knight),
-                Type::Queen => self.move_line(from, &mut base, color, &queen),
+                Type::Queen => self.move_line(from, &mut base, color, &QUEEN),
                 Type::Pawn => self.pawn(from, &mut base, color),
             },
         }
@@ -58,7 +59,7 @@ impl Engin {
         return base;
     }
 
-    fn move_line(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, dir: &Vec<[i8; 2]>) {
+    fn move_line(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, dir: &[[i8; 2]]) {
         for d in dir {
             let mut look = from.from(d[0], d[1]);
             while look.i < 8 && look.j < 8 && look.i >= 0 && look.j >= 0 {
@@ -78,7 +79,7 @@ impl Engin {
         }
     }
 
-    fn patern(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, dir: &Vec<[i8; 2]>) {
+    fn patern(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool, dir: &[[i8; 2]]) {
         for d in dir {
             let i: i8 = from.i + d[0];
             let j: i8 = from.j + d[1];
@@ -140,12 +141,95 @@ impl Engin {
 }
 
 /**
- * Manipulation
+ * Controls
  */
 
 impl Engin {
-    fn set(&mut self, p: Piece, to: &Pos) {
-        self.board[to.index()] = Some(p);
+    pub fn is_attack(&self, look: &Pos, me: bool) -> bool {
+        // check aussi si la 1er case croiser est un roi
+        let dir = if me { -1 } else { 1 }; // vertical movement (i axis)
+
+        for d in ROOK {
+            let mut distance = 1;
+            let mut head = look.from(d[0], d[1]);
+            while head.i < 8 && head.j < 8 && head.i >= 0 && head.j >= 0 {
+                match self.board[head.index()] {
+                    Some(Piece {
+                        color,
+                        kind: Type::Queen | Type::Rook,
+                    }) => {
+                        if color ^ me {
+                            return true;
+                        }
+                        break;
+                    }
+                    Some(Piece {
+                        color,
+                        kind: Type::King,
+                    }) if color ^ me && distance == 1 => return true,
+
+                    Some(_) => break,
+                    None => (),
+                }
+                head.i += d[0];
+                head.j += d[1];
+                distance += 1;
+            }
+        }
+
+        // pareil roi mais aussi pawn inverse
+        for d in BISHOP {
+            let mut distance = 1;
+            let mut head = look.from(d[0], d[1]);
+            while head.i < 8 && head.j < 8 && head.i >= 0 && head.j >= 0 {
+                match self.board[head.index()] {
+                    Some(Piece {
+                        color,
+                        kind: Type::Queen | Type::Bishop,
+                    }) => {
+                        if color ^ me {
+                            return true;
+                        }
+                        break;
+                    }
+
+                    Some(Piece {
+                        color,
+                        kind: Type::King,
+                    }) if color ^ me && distance == 1 => return true,
+
+                    Some(Piece {
+                        color,
+                        kind: Type::Pawn,
+                    }) if color ^ me && distance == 1 && d[0] == dir => return true,
+                    Some(_) => break,
+                    None => (),
+                }
+                head.i += d[0];
+                head.j += d[1];
+                distance += 1;
+            }
+        }
+
+        for d in KNIGHT {
+            let i: i8 = look.i + d[0];
+            let j: i8 = look.j + d[1];
+            if !(i < 8 && j < 8 && i >= 0 && j >= 0) {
+                continue;
+            }
+            match self.board[(i * 8 + j) as usize] {
+                Some(Piece {
+                    color,
+                    kind: Type::Knight,
+                }) => {
+                    if color ^ me {
+                        return true;
+                    }
+                }
+                _ => (),
+            }
+        }
+        return false;
     }
 }
 
@@ -154,13 +238,6 @@ impl Engin {
  */
 
 impl Engin {
-    pub fn empty(played: bool) -> Self {
-        Self {
-            board: [None; (SIZE * SIZE) as usize],
-            played,
-        }
-    }
-
     pub fn classic(played: bool) -> Self {
         let mut base = [None; (SIZE * SIZE) as usize];
         let white = [

@@ -33,7 +33,7 @@ The search engine and its decision-making logic are planned features and are not
 - Benchmark search performance.
 - Improve move ordering and evaluation heuristics.
 
-## :tools: Technologies
+##  Technologies
 
 - **Rust** — Main development language
 - **Raylib** — Graphical interface
