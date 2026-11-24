@@ -1,7 +1,7 @@
 // all things about manipulation of board
 
 use core::fmt;
-use std::vec;
+use std::{collections::HashMap, vec};
 
 use crate::chess::{Piece, Pos, SIZE, Type};
 
@@ -28,9 +28,19 @@ const KNIGHT: &[[i8; 2]] = &[
     [-1, -2],
 ];
 
+pub struct Data {
+    pub king: Pos,
+    pub eat: HashMap<Piece, Pos>,
+}
+
 pub struct Engin {
     board: [Option<Piece>; (SIZE * SIZE) as usize],
     played: bool,
+
+    white: Data,
+    black: Data,
+
+    halfmove_clock: u16,
 }
 
 /**
@@ -138,6 +148,43 @@ impl Engin {
             }
         }
     }
+
+    fn king(&self, from: &Pos, base: &mut Vec<Pos>, color_piece: bool) {
+        for i in -1..2 {
+            for j in -1..2 {
+                if i == 0 && j == 0 {
+                    continue;
+                }
+                let look = from.from(i, j);
+                if !((0..8).contains(&look.i) && (0..8).contains(&look.j)) {
+                    continue;
+                }
+                match self.board[look.index()] {
+                    Some(p) if color_piece ^ p.color => continue,
+                    Some(Piece {
+                        kind: Type::King, ..
+                    }) => continue,
+                    _ => base.push(look),
+                }
+            }
+        }
+    }
+}
+
+pub struct UndoCtx {
+    eat: Option<(Pos, Piece)>,
+    pass: Option<Pos>,
+    castle: [bool; 4], // little white -> big black
+    white_king: Pos,
+    black_king: Pos,
+    moved: Piece,
+    halfmove_clock: u16, // if 100 -> match nulle (remi a 0 si joue pawn or capture sinon +1)
+}
+
+pub struct Move {
+    pub from: Pos,
+    pub to: Pos,
+    pub prom: Option<Type>,
 }
 
 /**
@@ -231,6 +278,71 @@ impl Engin {
         }
         return false;
     }
+
+    pub fn check(&self, camp: bool) -> bool {
+        let king = if camp {
+            &self.white.king
+        } else {
+            &self.black.king
+        };
+        return self.is_attack(king, camp);
+    }
+
+    pub fn undo_mv(&mut self, mv: &Move, ctx: UndoCtx) {
+        let to = mv.to.index();
+        let from = mv.from.index();
+
+        self.board[from] = Some(ctx.moved);
+        self.board[to] = ctx.eat.map(|(_, p)| p);
+
+        // castle rule
+        // pass rule
+
+        self.halfmove_clock = ctx.halfmove_clock;
+        self.white.king = ctx.white_king;
+        self.black.king = ctx.black_king;
+    }
+
+    pub fn do_mv(&mut self, mv: &Move) -> UndoCtx {
+        let to = mv.to.index();
+        let from = mv.from.index();
+
+        let moved = self.board[from].expect("No pieces on the starting cell");
+
+        let capture = self.board[to].map(|piece| (mv.to, piece));
+
+        let ctx = UndoCtx {
+            eat: capture,
+            pass: None,
+            castle: [false; 4],
+            white_king: self.white.king,
+            black_king: self.black.king,
+            moved,
+            halfmove_clock: self.halfmove_clock,
+        };
+
+        self.board[to] = self.board[from];
+        self.board[from] = None;
+
+        // castle rule
+        // pass rule
+
+        if moved.kind == Type::King {
+            if moved.color {
+                self.white.king = mv.to;
+            } else {
+                self.black.king = mv.to;
+            }
+        }
+
+        if moved.kind == Type::Pawn || capture.is_some() {
+            self.halfmove_clock = 0;
+        } else {
+            self.halfmove_clock += 1;
+        }
+
+        return ctx;
+    }
 }
 
 /**
@@ -268,6 +380,15 @@ impl Engin {
         Self {
             board: base,
             played,
+            white: Data {
+                king: Pos::is(7, 3),
+                eat: HashMap::new(),
+            },
+            black: Data {
+                king: Pos::is(0, 3),
+                eat: HashMap::new(),
+            },
+            halfmove_clock: 0,
         }
     }
 }

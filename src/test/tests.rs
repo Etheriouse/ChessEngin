@@ -9,6 +9,9 @@ impl Engin {
         Self {
             board: [None; (SIZE * SIZE) as usize],
             played,
+            white: Data { king: Pos::is(7, 3), eat: HashMap::new() },
+            black: Data { king: Pos::is(0, 3), eat: HashMap::new() },
+            halfmove_clock: 0,
         }
     }
 }
