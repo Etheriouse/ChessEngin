@@ -1,7 +1,7 @@
 // all things about manipulation of board
 
 use core::fmt;
-use std::{collections::HashMap, vec};
+use std::{collections::HashMap, print, println, vec, write};
 
 use crate::chess::{Piece, Pos, SIZE, Type};
 
@@ -47,8 +47,47 @@ pub struct Engin {
  * Movement
  */
 impl Engin {
-    pub fn moves(&self, from: &Pos) -> Vec<Pos> {
-        return self.theoretical_moves(from);
+    pub fn moves(&mut self, from: &Pos) -> Vec<Move> {
+        let Some(p) = self.board[from.index()] else {
+            return vec![];
+        };
+
+        let mut base = vec![];
+
+        for to in self.theoretical_moves(from) {
+           
+            if self.board[to.index()].is_some_and(|p| p.kind == Type::King) {
+                continue;
+            }
+
+            let promotion = p.kind == Type::Pawn && (to.i == 0 || to.i == SIZE - 1);
+           
+            let proms: &[Option<Type>] = if promotion {
+                &[
+                    Some(Type::Knight),
+                    Some(Type::Rook),
+                    Some(Type::Bishop),
+                    Some(Type::Queen),
+                ]
+            } else {
+                &[None]
+            };
+
+            for &prom in proms {
+                let mv = Move {
+                    from: from.clone(),
+                    to: to.clone(),
+                    prom,
+                };
+                let ctx = self.do_mv(&mv);
+                let verify = self.check(p.color);
+                self.undo_mv(&mv, ctx);
+                if !verify {
+                    base.push(mv);
+                }
+            }
+        }
+        base
     }
 
     fn theoretical_moves(&self, from: &Pos) -> Vec<Pos> {
@@ -112,7 +151,7 @@ impl Engin {
         let dir = if color_piece { -1 } else { 1 }; // vertical movement (i axis)
         let start = if color_piece { 6 } else { 1 }; // row 
 
-        if from.j > 1 {
+        if from.j > 0 {
             match self.board[from.indexa(dir, -1)] {
                 None => (),
                 Some(piece) => {
@@ -181,6 +220,7 @@ pub struct UndoCtx {
     halfmove_clock: u16, // if 100 -> match nulle (remi a 0 si joue pawn or capture sinon +1)
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Move {
     pub from: Pos,
     pub to: Pos,
@@ -321,7 +361,14 @@ impl Engin {
             halfmove_clock: self.halfmove_clock,
         };
 
-        self.board[to] = self.board[from];
+        let head = match mv.prom {
+            Some(kind) if kind == Type::Pawn => {
+                Piece { color: moved.color, kind }
+            },
+            _ => moved,
+        };
+
+        self.board[to] = Some(head);
         self.board[from] = None;
 
         // castle rule
@@ -423,6 +470,24 @@ impl fmt::Display for Engin {
         Ok(())
     }
 }
+
+impl fmt::Display for Move {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}->{}", self.from, self.to)?;
+        if let Some(kind) = self.prom {
+            write!(f, " ({})", kind)?;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Debug for Move {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+
 
 #[cfg(test)]
 #[path = "test/tests.rs"]
