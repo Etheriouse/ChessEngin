@@ -1,7 +1,7 @@
 // all things about manipulation of board
 
 use core::fmt;
-use std::{collections::HashMap, print, println, vec, write};
+use std::{collections::HashMap, todo, vec, write};
 
 use crate::chess::{Piece, Pos, SIZE, Type};
 
@@ -30,7 +30,7 @@ const KNIGHT: &[[i8; 2]] = &[
 
 pub struct Data {
     pub king: Pos,
-    pub eat: HashMap<Piece, Pos>,
+    pub _eat: HashMap<Piece, Pos>,
 }
 
 pub struct Engin {
@@ -99,7 +99,7 @@ impl Engin {
                 Type::Rook => self.move_line(from, &mut base, color, &ROOK),
                 Type::Bishop => self.move_line(from, &mut base, color, &BISHOP),
                 Type::Knight => self.patern(from, &mut base, color, &KNIGHT),
-                Type::King => (), //self.patern(from, &mut base, color, &knight),
+                Type::King => self.king(from, &mut base, color),
                 Type::Queen => self.move_line(from, &mut base, color, &QUEEN),
                 Type::Pawn => self.pawn(from, &mut base, color),
             },
@@ -212,8 +212,8 @@ impl Engin {
 
 pub struct UndoCtx {
     eat: Option<(Pos, Piece)>,
-    pass: Option<Pos>,
-    castle: [bool; 4], // little white -> big black
+    _pass: Option<Pos>,
+    _castle: [bool; 4], // little white -> big black
     white_king: Pos,
     black_king: Pos,
     moved: Piece,
@@ -353,8 +353,8 @@ impl Engin {
 
         let ctx = UndoCtx {
             eat: capture,
-            pass: None,
-            castle: [false; 4],
+            _pass: None,
+            _castle: [false; 4],
             white_king: self.white.king,
             black_king: self.black.king,
             moved,
@@ -362,7 +362,7 @@ impl Engin {
         };
 
         let head = match mv.prom {
-            Some(kind) if kind == Type::Pawn => {
+            Some(kind) if moved.kind == Type::Pawn => {
                 Piece { color: moved.color, kind }
             },
             _ => moved,
@@ -429,11 +429,11 @@ impl Engin {
             played,
             white: Data {
                 king: Pos::is(7, 3),
-                eat: HashMap::new(),
+                _eat: HashMap::new(),
             },
             black: Data {
                 king: Pos::is(0, 3),
-                eat: HashMap::new(),
+                _eat: HashMap::new(),
             },
             halfmove_clock: 0,
         }
@@ -484,6 +484,17 @@ impl fmt::Display for Move {
 impl fmt::Debug for Move {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(self, f)
+    }
+}
+
+impl Move {
+    pub fn _to_san(&self) -> String {
+        todo!();
+    }
+
+
+    pub fn _to_uci(&self) -> String {
+        todo!();
     }
 }
 

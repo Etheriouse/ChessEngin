@@ -5,23 +5,6 @@ use super::*;
 // FONCTIONS UTILITAIRES
 // ============================================================
 
-fn assert_moves(chess: &Engin, from: &str, expected: &[&str]) {
-    let moves = chess.moves(&Pos::at(from));
-
-    assert_eq!(
-        moves.len(),
-        expected.len(),
-        "Mauvais nombre de coups depuis {from}. Obtenus : {moves:?}"
-    );
-
-    for &square in expected {
-        assert!(
-            moves.contains(&Pos::at(square)),
-            "Coup {from} -> {square} manquant. Obtenus : {moves:?}"
-        );
-    }
-}
-
 fn rook(chess: &mut Engin, white: bool, square: &str) {
     chess.set(
         Piece::new(white, Type::Rook),
@@ -42,18 +25,18 @@ fn pawn(chess: &mut Engin, white: bool, square: &str) {
 
 #[test]
 fn initial_white_rooks() {
-    let chess = Engin::classic(true);
+    let mut chess = Engin::classic(true);
 
-    assert_moves(&chess, "a1", &[]);
-    assert_moves(&chess, "h1", &[]);
+    assert_moves(&mut chess, "a1", &[]);
+    assert_moves(&mut chess, "h1", &[]);
 }
 
 #[test]
 fn initial_black_rooks() {
-    let chess = Engin::classic(true);
+    let mut chess = Engin::classic(true);
 
-    assert_moves(&chess, "a8", &[]);
-    assert_moves(&chess, "h8", &[]);
+    assert_moves(&mut chess, "a8", &[]);
+    assert_moves(&mut chess, "h8", &[]);
 }
 
 // ============================================================
@@ -66,7 +49,7 @@ fn white_rook_center() {
     rook(&mut chess, true, "d4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d1", "d2", "d3",
@@ -83,7 +66,7 @@ fn black_rook_center() {
     rook(&mut chess, false, "d4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d1", "d2", "d3",
@@ -100,7 +83,7 @@ fn rook_a1() {
     rook(&mut chess, true, "a1");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "a1",
         &[
             "a2", "a3", "a4", "a5", "a6", "a7", "a8",
@@ -115,7 +98,7 @@ fn rook_h1() {
     rook(&mut chess, true, "h1");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "h1",
         &[
             "h2", "h3", "h4", "h5", "h6", "h7", "h8",
@@ -130,7 +113,7 @@ fn rook_a8() {
     rook(&mut chess, true, "a8");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "a8",
         &[
             "a1", "a2", "a3", "a4", "a5", "a6", "a7",
@@ -145,7 +128,7 @@ fn rook_h8() {
     rook(&mut chess, true, "h8");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "h8",
         &[
             "h1", "h2", "h3", "h4", "h5", "h6", "h7",
@@ -164,7 +147,7 @@ fn rook_a4() {
     rook(&mut chess, true, "a4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "a4",
         &[
             "a1", "a2", "a3", "a5", "a6", "a7", "a8",
@@ -179,7 +162,7 @@ fn rook_h4() {
     rook(&mut chess, true, "h4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "h4",
         &[
             "h1", "h2", "h3", "h5", "h6", "h7", "h8",
@@ -194,7 +177,7 @@ fn rook_d1() {
     rook(&mut chess, true, "d1");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d1",
         &[
             "d2", "d3", "d4", "d5", "d6", "d7", "d8",
@@ -209,7 +192,7 @@ fn rook_d8() {
     rook(&mut chess, true, "d8");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d8",
         &[
             "d1", "d2", "d3", "d4", "d5", "d6", "d7",
@@ -229,7 +212,7 @@ fn rook_blocked_above_by_ally() {
     pawn(&mut chess, true, "d6");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d1", "d2", "d3", "d5",
@@ -245,7 +228,7 @@ fn rook_blocked_below_by_ally() {
     pawn(&mut chess, true, "d2");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d3", "d5", "d6", "d7", "d8",
@@ -261,7 +244,7 @@ fn rook_blocked_left_by_ally() {
     pawn(&mut chess, true, "b4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "c4",
@@ -278,7 +261,7 @@ fn rook_blocked_right_by_ally() {
     pawn(&mut chess, true, "f4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a4", "b4", "c4", "e4",
@@ -296,7 +279,7 @@ fn rook_surrounded_by_allies() {
         pawn(&mut chess, true, square);
     }
 
-    assert_moves(&chess, "d4", &[]);
+    assert_moves(&mut chess, "d4", &[]);
 }
 
 // ============================================================
@@ -310,7 +293,7 @@ fn rook_capture_above() {
     pawn(&mut chess, false, "d6");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d1", "d2", "d3", "d5", "d6",
@@ -326,7 +309,7 @@ fn rook_capture_below() {
     pawn(&mut chess, false, "d2");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d2", "d3", "d5", "d6", "d7", "d8",
@@ -342,7 +325,7 @@ fn rook_capture_left() {
     pawn(&mut chess, false, "b4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "b4", "c4", "e4", "f4", "g4", "h4",
@@ -358,7 +341,7 @@ fn rook_capture_right() {
     pawn(&mut chess, false, "f4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a4", "b4", "c4", "e4", "f4",
@@ -376,7 +359,7 @@ fn rook_surrounded_by_enemies() {
         pawn(&mut chess, false, square);
     }
 
-    assert_moves(&chess, "d4", &["d5", "d3", "c4", "e4"]);
+    assert_moves(&mut chess, "d4", &["d5", "d3", "c4", "e4"]);
 }
 
 // ============================================================
@@ -393,7 +376,7 @@ fn rook_multiple_allied_obstacles() {
     }
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &["d5", "d3", "c4", "e4"],
     );
@@ -409,7 +392,7 @@ fn rook_multiple_enemy_obstacles() {
     }
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d5", "d6", "d3", "d2",
@@ -429,7 +412,7 @@ fn rook_mixed_obstacles() {
     pawn(&mut chess, false, "f4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d5",
@@ -452,7 +435,7 @@ fn rook_cannot_jump_over_ally() {
     pawn(&mut chess, false, "d7");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d1", "d2", "d3",
@@ -469,7 +452,7 @@ fn rook_cannot_jump_over_enemy() {
     pawn(&mut chess, false, "d7");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d1", "d2", "d3", "d5",
@@ -486,7 +469,7 @@ fn rook_cannot_capture_piece_behind_enemy() {
     pawn(&mut chess, false, "h4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a4", "b4", "c4", "e4", "f4",
@@ -528,7 +511,7 @@ fn black_rook_with_allied_and_enemy_obstacles() {
     pawn(&mut chess, true, "f4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "d5",

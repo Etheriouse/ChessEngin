@@ -5,23 +5,6 @@ use super::*;
 // FONCTIONS UTILITAIRES
 // ============================================================
 
-fn assert_moves(chess: &Engin, from: &str, expected: &[&str]) {
-    let moves = chess.moves(&Pos::at(from));
-
-    assert_eq!(
-        moves.len(),
-        expected.len(),
-        "Mauvais nombre de coups depuis {from}. Obtenus : {moves:?}"
-    );
-
-    for &square in expected {
-        assert!(
-            moves.contains(&Pos::at(square)),
-            "Coup {from} -> {square} manquant. Obtenus : {moves:?}"
-        );
-    }
-}
-
 fn bishop(chess: &mut Engin, white: bool, square: &str) {
     chess.set(
         Piece::new(white, Type::Bishop),
@@ -42,18 +25,18 @@ fn pawn(chess: &mut Engin, white: bool, square: &str) {
 
 #[test]
 fn initial_white_bishops() {
-    let chess = Engin::classic(true);
+    let mut chess = Engin::classic(true);
 
-    assert_moves(&chess, "c1", &[]);
-    assert_moves(&chess, "f1", &[]);
+    assert_moves(&mut chess, "c1", &[]);
+    assert_moves(&mut chess, "f1", &[]);
 }
 
 #[test]
 fn initial_black_bishops() {
-    let chess = Engin::classic(true);
+    let mut chess = Engin::classic(true);
 
-    assert_moves(&chess, "c8", &[]);
-    assert_moves(&chess, "f8", &[]);
+    assert_moves(&mut chess, "c8", &[]);
+    assert_moves(&mut chess, "f8", &[]);
 }
 
 // ============================================================
@@ -66,7 +49,7 @@ fn white_bishop_center() {
     bishop(&mut chess, true, "d4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -83,7 +66,7 @@ fn black_bishop_center() {
     bishop(&mut chess, false, "d4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -100,7 +83,7 @@ fn bishop_e5() {
     bishop(&mut chess, true, "e5");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "e5",
         &[
             "a1", "b2", "c3", "d4",
@@ -121,7 +104,7 @@ fn bishop_a1() {
     bishop(&mut chess, true, "a1");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "a1",
         &["b2", "c3", "d4", "e5", "f6", "g7", "h8"],
     );
@@ -133,7 +116,7 @@ fn bishop_h1() {
     bishop(&mut chess, true, "h1");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "h1",
         &["g2", "f3", "e4", "d5", "c6", "b7", "a8"],
     );
@@ -145,7 +128,7 @@ fn bishop_a8() {
     bishop(&mut chess, true, "a8");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "a8",
         &["b7", "c6", "d5", "e4", "f3", "g2", "h1"],
     );
@@ -157,7 +140,7 @@ fn bishop_h8() {
     bishop(&mut chess, true, "h8");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "h8",
         &["g7", "f6", "e5", "d4", "c3", "b2", "a1"],
     );
@@ -173,7 +156,7 @@ fn bishop_a4() {
     bishop(&mut chess, true, "a4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "a4",
         &[
             "b5", "c6", "d7", "e8",
@@ -188,7 +171,7 @@ fn bishop_h4() {
     bishop(&mut chess, true, "h4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "h4",
         &[
             "g5", "f6", "e7", "d8",
@@ -203,7 +186,7 @@ fn bishop_d1() {
     bishop(&mut chess, true, "d1");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d1",
         &[
             "c2", "b3", "a4",
@@ -218,7 +201,7 @@ fn bishop_d8() {
     bishop(&mut chess, true, "d8");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d8",
         &[
             "c7", "b6", "a5",
@@ -238,7 +221,7 @@ fn bishop_blocked_up_right_by_ally() {
     pawn(&mut chess, true, "f6");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -256,7 +239,7 @@ fn bishop_blocked_up_left_by_ally() {
     pawn(&mut chess, true, "b6");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -274,7 +257,7 @@ fn bishop_blocked_down_right_by_ally() {
     pawn(&mut chess, true, "f2");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -292,7 +275,7 @@ fn bishop_blocked_down_left_by_ally() {
     pawn(&mut chess, true, "b2");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "c3",
@@ -312,7 +295,7 @@ fn bishop_surrounded_by_allies() {
         pawn(&mut chess, true, square);
     }
 
-    assert_moves(&chess, "d4", &[]);
+    assert_moves(&mut chess, "d4", &[]);
 }
 
 // ============================================================
@@ -326,7 +309,7 @@ fn bishop_capture_up_right() {
     pawn(&mut chess, false, "f6");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -344,7 +327,7 @@ fn bishop_capture_up_left() {
     pawn(&mut chess, false, "b6");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -362,7 +345,7 @@ fn bishop_capture_down_right() {
     pawn(&mut chess, false, "f2");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -380,7 +363,7 @@ fn bishop_capture_down_left() {
     pawn(&mut chess, false, "b2");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "c3", "b2",
@@ -400,7 +383,7 @@ fn bishop_surrounded_by_enemies() {
         pawn(&mut chess, false, square);
     }
 
-    assert_moves(&chess, "d4", &["c3", "c5", "e3", "e5"]);
+    assert_moves(&mut chess, "d4", &["c3", "c5", "e3", "e5"]);
 }
 
 // ============================================================
@@ -417,7 +400,7 @@ fn bishop_multiple_allied_obstacles() {
     }
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &["c3", "c5", "e3", "e5"],
     );
@@ -433,7 +416,7 @@ fn bishop_multiple_enemy_obstacles() {
     }
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "c3", "b2",
@@ -455,7 +438,7 @@ fn bishop_mixed_obstacles() {
     pawn(&mut chess, false, "f6");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "c3",
@@ -478,7 +461,7 @@ fn bishop_cannot_jump_over_ally() {
     pawn(&mut chess, false, "g7");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -496,7 +479,7 @@ fn bishop_cannot_jump_over_enemy() {
     pawn(&mut chess, false, "g7");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -515,7 +498,7 @@ fn bishop_cannot_capture_piece_behind_enemy() {
     pawn(&mut chess, false, "h8");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "a1", "b2", "c3",
@@ -543,7 +526,7 @@ fn bishop_stays_on_same_square_color() {
     for pos in moves {
         assert_eq!(
             (from.i + from.j).rem_euclid(2),
-            (pos.i + pos.j).rem_euclid(2),
+            (pos.to.i + pos.to.j).rem_euclid(2),
             "Le fou a changé de couleur de case"
         );
     }
@@ -582,7 +565,7 @@ fn black_bishop_with_allied_and_enemy_obstacles() {
     pawn(&mut chess, true, "f6");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "c3",

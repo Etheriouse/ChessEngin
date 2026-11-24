@@ -5,23 +5,6 @@ use super::*;
 // FONCTIONS UTILITAIRES
 // ============================================================
 
-fn assert_moves(chess: &Engin, from: &str, expected: &[&str]) {
-    let moves = chess.moves(&Pos::at(from));
-
-    assert_eq!(
-        moves.len(),
-        expected.len(),
-        "Mauvais nombre de coups depuis {from}. Obtenus : {moves:?}"
-    );
-
-    for &square in expected {
-        assert!(
-            moves.contains(&Pos::at(square)),
-            "Coup {from} -> {square} manquant. Obtenus : {moves:?}"
-        );
-    }
-}
-
 fn knight(chess: &mut Engin, white: bool, square: &str) {
     chess.set(
         Piece::new(white, Type::Knight),
@@ -36,24 +19,29 @@ fn pawn(chess: &mut Engin, white: bool, square: &str) {
     );
 }
 
+
+fn piece(chess: &mut Engin, white: bool, kind: Type, square: &str) {
+    chess.set(Piece::new(white, kind), &Pos::at(square));
+}
+
 // ============================================================
 // POSITION INITIALE
 // ============================================================
 
 #[test]
 fn initial_white_knights() {
-    let chess = Engin::classic(true);
+    let mut chess = Engin::classic(true);
 
-    assert_moves(&chess, "b1", &["a3", "c3"]);
-    assert_moves(&chess, "g1", &["f3", "h3"]);
+    assert_moves(&mut chess, "b1", &["a3", "c3"]);
+    assert_moves(&mut chess, "g1", &["f3", "h3"]);
 }
 
 #[test]
 fn initial_black_knights() {
-    let chess = Engin::classic(true);
+    let mut chess = Engin::classic(true);
 
-    assert_moves(&chess, "b8", &["a6", "c6"]);
-    assert_moves(&chess, "g8", &["f6", "h6"]);
+    assert_moves(&mut chess, "b8", &["a6", "c6"]);
+    assert_moves(&mut chess, "g8", &["f6", "h6"]);
 }
 
 // ============================================================
@@ -66,7 +54,7 @@ fn white_knight_center() {
     knight(&mut chess, true, "d4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "b3", "b5",
@@ -83,7 +71,7 @@ fn black_knight_center() {
     knight(&mut chess, false, "d4");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "b3", "b5",
@@ -100,7 +88,7 @@ fn knight_e5_eight_moves() {
     knight(&mut chess, true, "e5");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "e5",
         &[
             "c4", "c6",
@@ -120,7 +108,7 @@ fn knight_a1() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "a1");
 
-    assert_moves(&chess, "a1", &["b3", "c2"]);
+    assert_moves(&mut chess, "a1", &["b3", "c2"]);
 }
 
 #[test]
@@ -128,7 +116,7 @@ fn knight_h1() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "h1");
 
-    assert_moves(&chess, "h1", &["f2", "g3"]);
+    assert_moves(&mut chess, "h1", &["f2", "g3"]);
 }
 
 #[test]
@@ -136,7 +124,7 @@ fn knight_a8() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "a8");
 
-    assert_moves(&chess, "a8", &["b6", "c7"]);
+    assert_moves(&mut chess, "a8", &["b6", "c7"]);
 }
 
 #[test]
@@ -144,7 +132,7 @@ fn knight_h8() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "h8");
 
-    assert_moves(&chess, "h8", &["f7", "g6"]);
+    assert_moves(&mut chess, "h8", &["f7", "g6"]);
 }
 
 // ============================================================
@@ -156,7 +144,7 @@ fn knight_a4() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "a4");
 
-    assert_moves(&chess, "a4", &["b2", "b6", "c3", "c5"]);
+    assert_moves(&mut chess, "a4", &["b2", "b6", "c3", "c5"]);
 }
 
 #[test]
@@ -164,7 +152,7 @@ fn knight_h4() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "h4");
 
-    assert_moves(&chess, "h4", &["f3", "f5", "g2", "g6"]);
+    assert_moves(&mut chess, "h4", &["f3", "f5", "g2", "g6"]);
 }
 
 #[test]
@@ -172,7 +160,7 @@ fn knight_d1() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "d1");
 
-    assert_moves(&chess, "d1", &["b2", "c3", "e3", "f2"]);
+    assert_moves(&mut chess, "d1", &["b2", "c3", "e3", "f2"]);
 }
 
 #[test]
@@ -180,7 +168,7 @@ fn knight_d8() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "d8");
 
-    assert_moves(&chess, "d8", &["b7", "c6", "e6", "f7"]);
+    assert_moves(&mut chess, "d8", &["b7", "c6", "e6", "f7"]);
 }
 
 // ============================================================
@@ -192,7 +180,7 @@ fn knight_b1() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "b1");
 
-    assert_moves(&chess, "b1", &["a3", "c3", "d2"]);
+    assert_moves(&mut chess, "b1", &["a3", "c3", "d2"]);
 }
 
 #[test]
@@ -200,7 +188,7 @@ fn knight_g1() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "g1");
 
-    assert_moves(&chess, "g1", &["e2", "f3", "h3"]);
+    assert_moves(&mut chess, "g1", &["e2", "f3", "h3"]);
 }
 
 #[test]
@@ -208,7 +196,7 @@ fn knight_b8() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "b8");
 
-    assert_moves(&chess, "b8", &["a6", "c6", "d7"]);
+    assert_moves(&mut chess, "b8", &["a6", "c6", "d7"]);
 }
 
 #[test]
@@ -216,7 +204,7 @@ fn knight_g8() {
     let mut chess = Engin::empty(true);
     knight(&mut chess, true, "g8");
 
-    assert_moves(&chess, "g8", &["e7", "f6", "h6"]);
+    assert_moves(&mut chess, "g8", &["e7", "f6", "h6"]);
 }
 
 // ============================================================
@@ -230,7 +218,7 @@ fn white_knight_capture_one_enemy() {
     pawn(&mut chess, false, "f5");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "b3", "b5", "c2", "c6",
@@ -246,7 +234,7 @@ fn black_knight_capture_one_enemy() {
     pawn(&mut chess, true, "f5");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "b3", "b5", "c2", "c6",
@@ -258,6 +246,9 @@ fn black_knight_capture_one_enemy() {
 #[test]
 fn white_knight_surrounded_by_enemies() {
     let mut chess = Engin::empty(true);
+
+    piece(&mut chess, true, Type::King, "h1");
+    piece(&mut chess, false, Type::King, "h8");
     knight(&mut chess, true, "d4");
 
     for square in [
@@ -268,7 +259,7 @@ fn white_knight_surrounded_by_enemies() {
     }
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "b3", "b5", "c2", "c6",
@@ -288,7 +279,7 @@ fn knight_cannot_capture_ally() {
     pawn(&mut chess, true, "f5");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "b3", "b5", "c2", "c6",
@@ -304,7 +295,7 @@ fn black_knight_cannot_capture_ally() {
     pawn(&mut chess, false, "f5");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "b3", "b5", "c2", "c6",
@@ -325,7 +316,7 @@ fn knight_surrounded_by_allies() {
         pawn(&mut chess, true, square);
     }
 
-    assert_moves(&chess, "d4", &[]);
+    assert_moves(&mut chess, "d4", &[]);
 }
 
 #[test]
@@ -339,7 +330,7 @@ fn knight_mixed_allies_and_enemies() {
     pawn(&mut chess, false, "f5");
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &["b5", "c6", "e2", "e6", "f3", "f5"],
     );
@@ -363,7 +354,7 @@ fn knight_jumps_over_allies() {
     }
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "b3", "b5", "c2", "c6",
@@ -386,7 +377,7 @@ fn knight_jumps_over_enemies() {
     }
 
     assert_moves(
-        &chess,
+        &mut chess,
         "d4",
         &[
             "b3", "b5", "c2", "c6",
@@ -405,7 +396,7 @@ fn knight_only_one_available_move() {
     knight(&mut chess, true, "a1");
     pawn(&mut chess, true, "b3");
 
-    assert_moves(&chess, "a1", &["c2"]);
+    assert_moves(&mut chess, "a1", &["c2"]);
 }
 
 #[test]
@@ -415,7 +406,7 @@ fn knight_no_available_moves_in_corner() {
     pawn(&mut chess, true, "b3");
     pawn(&mut chess, true, "c2");
 
-    assert_moves(&chess, "a1", &[]);
+    assert_moves(&mut chess, "a1", &[]);
 }
 
 #[test]
@@ -425,7 +416,7 @@ fn knight_can_capture_with_other_moves_blocked() {
     pawn(&mut chess, true, "b3");
     pawn(&mut chess, false, "c2");
 
-    assert_moves(&chess, "a1", &["c2"]);
+    assert_moves(&mut chess, "a1", &["c2"]);
 }
 
 // ============================================================
