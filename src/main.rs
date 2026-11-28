@@ -122,9 +122,9 @@ fn main() {
             d = start.elapsed();
         }
         if who_play {
-            white_time = white_time.sub(d);
+            white_time = white_time.saturating_sub(d);
         } else {
-            black_time = black_time.sub(d);
+            black_time = black_time.saturating_sub(d);
         }
 
         match mv {
@@ -161,6 +161,18 @@ fn main() {
             println!("mate");
             break;
         }
+
+        if white_time.is_zero() {
+            println!("time white");
+            break;
+        }
+
+        if black_time.is_zero() {
+            println!("time black");
+            break;
+        }
+
+
 
         match engin.history().last() {
             Some(mv) => half_mv += mv.to_string().as_str(),
