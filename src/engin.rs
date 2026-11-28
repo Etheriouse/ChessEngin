@@ -475,7 +475,6 @@ impl Engin {
         self.halfmove_clock = ctx.halfmove_clock;
         self.white.king = ctx.white_king;
         self.black.king = ctx.black_king;
-        self.history.pop();
     }
 
     pub fn do_mv(&mut self, mv: &Move) -> UndoCtx {
@@ -635,12 +634,12 @@ impl Engin {
             nmv += t.san();
         }
 
-        if (ctx.castle[0] != self.castle_rule[0]) || (ctx.castle[2] != self.castle_rule[2]) {
-            nmv = "O-O".to_owned();
-        }
-
-        if (ctx.castle[1] != self.castle_rule[1]) || (ctx.castle[3] != self.castle_rule[3]) {
-            nmv = "O-O-O".to_owned();
+        if p.kind == Type::King && mv.from.i == mv.to.i {
+            if mv.to.j == mv.from.j + 2 {
+                nmv = "O-O".to_owned();
+            } else if mv.from.j == mv.to.j + 2 {
+                nmv = "O-O-O".to_owned();
+            }
         }
 
         if self.check(!camp) {

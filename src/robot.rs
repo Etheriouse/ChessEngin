@@ -103,7 +103,7 @@ impl Robot {
                             for to_mv in engin.moves(&from) {
                                 let ctx = engin.do_mv(&to_mv);
                                 let tmp = self.minmax_(depth - 1, engin, !camp, camp);
-                                if tmp > reach {
+                                if best.is_none() || tmp > reach {
                                     best = Some(to_mv);
                                     reach = reach.max(tmp);
                                 }
