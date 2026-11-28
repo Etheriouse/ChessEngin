@@ -69,5 +69,6 @@ mod knight;
 mod pawn;
 mod queen;
 mod rook;
+mod pawn_struct;
 
 mod endgame;

@@ -4,7 +4,7 @@ use core::fmt;
 use std::{
     collections::HashMap,
     hash::{DefaultHasher, Hash, Hasher},
-    println, todo, vec, write,
+    vec, write,
 };
 
 use crate::chess::{Piece, Pos, SIZE, Type};
@@ -267,6 +267,23 @@ impl Engin {
         {
             base.push(pos(2));
         }
+    }
+
+    pub fn mobility(&self, from: &Pos) -> Vec<Pos> {
+        let mut base = vec![];
+
+        match self.board[from.index()] {
+            None => (),
+            Some(Piece { color, kind }) => match kind {
+                Type::Rook => self.move_line(from, &mut base, color, &ROOK),
+                Type::Bishop => self.move_line(from, &mut base, color, &BISHOP),
+                Type::Knight => self.patern(from, &mut base, color, &KNIGHT),
+                Type::Queen => self.move_line(from, &mut base, color, &QUEEN),
+                _ => (),
+            },
+        }
+
+        return base;
     }
 }
 
@@ -606,7 +623,7 @@ impl Engin {
      */
     pub fn mv(&mut self, mv: &Move, camp: bool, notation: bool) {
         let p = self.board[mv.from.index()].expect("nothing here");
-        let mut nmv = p.san().to_string();
+        let mut nmv: String = String::new()+p.icon();
         nmv += &self.san_ambiguity(mv, camp);
         let ctx = self.do_mv(mv);
         if ctx.eat.is_some() {
@@ -775,7 +792,7 @@ impl Engin {
      * Outisde of board considered as None
      */
     pub fn get(&self, p: &Pos) -> Option<Piece> {
-        if (0..SIZE*SIZE).contains(&(p.index() as i8)) {
+        if (0..SIZE * SIZE).contains(&(p.index() as i8)) {
             return self.board[p.index()];
         } else {
             return None;

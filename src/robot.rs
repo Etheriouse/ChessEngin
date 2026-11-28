@@ -349,9 +349,8 @@ impl Robot {
             score += CONNECTED_PAWNS[0];
         }
 
-
         // is protected
-         if engin
+        if engin
             .get(&head.from(-side, 1))
             .is_some_and(|p| !(p.color ^ camp) && p.kind == Type::Pawn)
         {
@@ -379,5 +378,49 @@ impl Robot {
         }
 
         return score;
+    }
+
+    /**
+     * Material and position and pawn structure and mobility
+     */
+    pub fn evaluate_v4(&self, engin: &Engin, camp: bool) -> f32 {
+        const MOBILITYS_CELL: [f32; 4] = [0.01f32, 0.01f32, 0.005f32, 0.002f32];
+
+        let mut sum = 0.0f32;
+        for i in 0..SIZE {
+            for j in 0..SIZE {
+                let head = Pos::is(i, j);
+                if let Some(p) = engin.get(&head) {
+                    let y = if p.color { i as usize } else { 7 - i as usize };
+                    let x = j as usize;
+                    let pv = match p.kind {
+                        crate::chess::Type::Bishop => {
+                            BISHOP_TABLE[y][x]
+                                + engin.mobility(&head).iter().count() as f32 * MOBILITYS_CELL[0]
+                        }
+                        crate::chess::Type::Knight => {
+                            KNIGHT_TABLE[y][x]
+                                + engin.mobility(&head).iter().count() as f32 * MOBILITYS_CELL[1]
+                        }
+                        crate::chess::Type::Rook => {
+                            ROOK_TABLE[y][x]
+                                + engin.mobility(&head).iter().count() as f32 * MOBILITYS_CELL[2]
+                        }
+                        crate::chess::Type::Queen => {
+                            QUEEN_TABLE[y][x]
+                                + engin.mobility(&head).iter().count() as f32 * MOBILITYS_CELL[3]
+                        }
+                        crate::chess::Type::King => KING_TABLE[y][x],
+                        crate::chess::Type::Pawn => {
+                            PAWN_TABLE[y][x] + self.pawn_structure(engin, &head, camp)
+                        }
+                    };
+                    let value = pv + p.value();
+
+                    sum += if p.color == camp { value } else { -value };
+                }
+            }
+        }
+        return sum;
     }
 }

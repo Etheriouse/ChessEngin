@@ -40,23 +40,24 @@ fn main() {
     robot.evaluate_v3(&engin, white);
     let duration3 = start.elapsed();
 
+    let start = Instant::now();
+    robot.evaluate_v4(&engin, white);
+    let duration4 = start.elapsed();
+
     println!("time evaluate_v1: {:?}", duration1);
     println!("time evaluate_v2: {:?}", duration2);
     println!("time evaluate_v3: {:?}", duration3);
+    println!("time evaluate_v4: {:?}", duration4);
 
-
-    return;
-
-    let black = false;
-
-    let turn = 100;
+    let turn = 5;
     let mut who_play = white;
     let mut end = 0;
+    let mut half_mv = String::new();
 
     for i in 0..turn {
         end = i;
         let start = Instant::now();
-        let mv = robot.minmax(3, &mut engin, who_play);
+        let mv = robot.minmax(4, &mut engin, who_play);
         let d = start.elapsed();
         println!(
             "{} thinking: {:?}",
@@ -82,7 +83,18 @@ fn main() {
             break;
         }
 
-        println!("{:?}", engin.history().last());
+        // println!("{:?}", if engin.history().last() );
+        match engin.history().last() {
+            Some(mv) => half_mv+=mv.to_string().as_str(),
+            None => (),
+        }
+        half_mv+=" ";
+
+        if !who_play && i > 0 {
+            println!("{}: {}", i/2, half_mv);
+            half_mv = "".to_string();
+        }
+        println!("{}", engin);
         who_play = !who_play;
     }
 

@@ -6,8 +6,6 @@
 // Le helper synchronise les cases de roi utilisees par Engin::check().
 // Ces tests utilisent des positions classiques (pas de roque ni de prise en passant).
 
-use crate::engin;
-
 use super::*;
 
 // ============================================================
