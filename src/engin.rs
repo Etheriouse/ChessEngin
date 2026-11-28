@@ -231,6 +231,10 @@ impl Engin {
         // (left) big castle little casle (right)
         // little castle white
 
+        if self.check(color_piece) {
+            return;
+        }
+
         let color_index = if color_piece { 0 } else { 2 };
 
         let little = 0;
@@ -767,8 +771,15 @@ impl Engin {
         }
     }
 
+    /**
+     * Outisde of board considered as None
+     */
     pub fn get(&self, p: &Pos) -> Option<Piece> {
-        return self.board[p.index()];
+        if (0..SIZE*SIZE).contains(&(p.index() as i8)) {
+            return self.board[p.index()];
+        } else {
+            return None;
+        }
     }
 
     pub fn history(&self) -> &Vec<String> {

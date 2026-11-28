@@ -28,6 +28,25 @@ fn main() {
     // // assert_eq!(engin, before);
 
     let white = true;
+    let start = Instant::now();
+    robot.evaluate_v1(&engin, white);
+    let duration1 = start.elapsed();
+
+    let start = Instant::now();
+    robot.evaluate_v2(&engin, white);
+    let duration2 = start.elapsed();
+
+    let start = Instant::now();
+    robot.evaluate_v3(&engin, white);
+    let duration3 = start.elapsed();
+
+    println!("time evaluate_v1: {:?}", duration1);
+    println!("time evaluate_v2: {:?}", duration2);
+    println!("time evaluate_v3: {:?}", duration3);
+
+
+    return;
+
     let black = false;
 
     let turn = 100;
