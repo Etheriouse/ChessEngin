@@ -623,7 +623,7 @@ impl Engin {
      */
     pub fn mv(&mut self, mv: &Move, camp: bool, notation: bool) {
         let p = self.board[mv.from.index()].expect("nothing here");
-        let mut nmv: String = String::new()+p.icon();
+        let mut nmv: String = String::new() + p.icon();
         nmv += &self.san_ambiguity(mv, camp);
         let ctx = self.do_mv(mv);
         if ctx.eat.is_some() {
@@ -831,11 +831,13 @@ impl fmt::Display for Engin {
             let col = if self.played { j } else { SIZE - 1 - j };
             write!(f, " {}", (b'a' + col as u8) as char)?;
         }
+        writeln!(f, "")?;
+
         if self.check(true) {
-            write!(f, "white in check")?;
+            writeln!(f, "white in check")?;
         }
         if self.check(false) {
-            write!(f, "black in check")?;
+            writeln!(f, "black in check")?;
         }
 
         Ok(())

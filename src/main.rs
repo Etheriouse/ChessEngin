@@ -49,7 +49,7 @@ fn main() {
     println!("time evaluate_v3: {:?}", duration3);
     println!("time evaluate_v4: {:?}", duration4);
 
-    let turn = 5;
+    let turn = 50;
     let mut who_play = white;
     let mut end = 0;
     let mut half_mv = String::new();
@@ -57,7 +57,7 @@ fn main() {
     for i in 0..turn {
         end = i;
         let start = Instant::now();
-        let mv = robot.minmax(4, &mut engin, who_play);
+        let mv = robot.minmax(if who_play { 2 } else { 3 }, &mut engin, who_play);
         let d = start.elapsed();
         println!(
             "{} thinking: {:?}",
@@ -66,7 +66,10 @@ fn main() {
         );
         match mv {
             Some(mve) => engin.mv(&mve, who_play, true),
-            None => break,
+            None => {
+                println!("nothing to play for {}", if who_play { "white" } else {"black"});
+                break;
+            },
         }
 
         if engin.draw_possible() {
@@ -85,19 +88,22 @@ fn main() {
 
         // println!("{:?}", if engin.history().last() );
         match engin.history().last() {
-            Some(mv) => half_mv+=mv.to_string().as_str(),
+            Some(mv) => half_mv += mv.to_string().as_str(),
             None => (),
         }
-        half_mv+=" ";
+        half_mv += " ";
 
         if !who_play && i > 0 {
-            println!("{}: {}", i/2, half_mv);
+            println!("{}: {}", i / 2, half_mv);
             half_mv = "".to_string();
         }
         println!("{}", engin);
         who_play = !who_play;
     }
-
-    println!("{}", engin);
+    
+    println!("mate white: {}", engin.checkmate(white));
+    println!("mate black: {}", engin.checkmate(!white));
+    println!("pat white: {}", engin.stalemate(white));
+    println!("pat black: {}", engin.stalemate(!white));
     println!("end: {} halfturn", end);
 }
