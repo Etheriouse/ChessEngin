@@ -9,14 +9,21 @@ impl Engin {
             board: [None; (SIZE * SIZE) as usize],
             played,
             white: Data {
-                king: Pos::is(7, 3),
+                king: Pos::is(10, 10),
+                // king: Pos::is(7, 3),
                 _eat: HashMap::new(),
             },
             black: Data {
-                king: Pos::is(0, 3),
+                king: Pos::is(10, 10),
+                // king: Pos::is(0, 3),
                 _eat: HashMap::new(),
             },
             halfmove_clock: 0,
+            castle_rule: [false; 4],
+            pass: None,
+            history: vec![],
+            pos_history: vec![],
+            current_hash: 0,
         }
     }
 }
@@ -56,10 +63,11 @@ fn assert_moves(chess: &mut Engin, from: &str, expected: &[&str]) {
 }
 
 mod bishop;
+mod is_attack;
 mod king;
 mod knight;
 mod pawn;
 mod queen;
 mod rook;
 
-mod is_attack;
+mod endgame;

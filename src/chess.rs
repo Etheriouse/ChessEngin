@@ -25,6 +25,19 @@ pub enum Type {
     Pawn,
 }
 
+impl Type {
+    pub fn san(&self) -> &str {
+        match self {
+            Type::King => "K",
+            Type::Queen => "Q",
+            Type::Rook => "R",
+            Type::Bishop => "B",
+            Type::Knight => "N",
+            Type::Pawn => "",
+        }
+    }
+}
+
 /**
  * Constructor
  */
@@ -43,8 +56,11 @@ impl Pos {
         Self { i, j }
     }
 
-    pub fn from(&self, i: i8, j:i8) -> Self {
-        Self {i: self.i+i, j: self.j+j}
+    pub fn from(&self, i: i8, j: i8) -> Self {
+        Self {
+            i: self.i + i,
+            j: self.j + j,
+        }
     }
 }
 
@@ -106,22 +122,37 @@ impl Piece {
     pub fn icon(&self) -> &str {
         if self.color {
             match self.kind {
-                Type::King => "]+",
-                Type::Queen => "[+",
-                Type::Rook => "$+",
-                Type::Bishop => "&+",
-                Type::Knight => "£+",
-                Type::Pawn => "@+",
+                Type::King => "♚",
+                Type::Queen => "♛",
+                Type::Rook => "♜",
+                Type::Bishop => "♝",
+                Type::Knight => "♞",
+                Type::Pawn => "♟",
             }
         } else {
             match self.kind {
-                Type::King => "]°",
-                Type::Queen => "[°",
-                Type::Rook => "$°",
-                Type::Bishop => "&°",
-                Type::Knight => "£°",
-                Type::Pawn => "@°",
+                Type::King => "♔",
+                Type::Queen => "♕",
+                Type::Rook => "♖",
+                Type::Bishop => "♗",
+                Type::Knight => "♘",
+                Type::Pawn => "♙",
             }
+        }
+    }
+
+    pub fn san(&self) -> &str {
+        return self.kind.san();
+    }
+
+    pub fn value(&self) -> f32 {
+        match self.kind {
+            Type::King => 0.0f32,
+            Type::Queen => 9.0f32,
+            Type::Rook => 5.0f32,
+            Type::Bishop => 3.3f32,
+            Type::Knight => 3.2f32,
+            Type::Pawn => 1.0f32,
         }
     }
 }

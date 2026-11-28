@@ -385,6 +385,7 @@ fn rook_multiple_allied_obstacles() {
 #[test]
 fn rook_multiple_enemy_obstacles() {
     let mut chess = Engin::empty(true);
+    
     rook(&mut chess, true, "d4");
 
     for square in ["d6", "d2", "b4", "f4"] {
@@ -399,6 +400,7 @@ fn rook_multiple_enemy_obstacles() {
             "c4", "b4", "e4", "f4",
         ],
     );
+
 }
 
 #[test]

@@ -596,3 +596,5 @@ fn white_capture_promotion_do_undo() {
 fn black_capture_promotion_do_undo() {
     assert_promotion_roundtrip(false, "d2", "e1", true);
 }
+
+// maj with pass later
